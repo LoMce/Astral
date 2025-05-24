@@ -1,0 +1,399 @@
+/* src/assets/main.css */
+
+/* Import Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@400;600&display=swap');
+
+/* CSS Variables - Default Theme (Space) */
+:root {
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+  --animation-speed-slow: 1s;
+  --animation-speed-very-slow: 1.8s;
+
+  /* Base Colors (Can be overridden by themes) */
+  --bg-color-space: #030208;
+  --bg-color: var(--bg-color-space); /* Default to space theme */
+  --card-bg-color: rgba(10, 8, 20, 0.88);
+  --card-bg-color-opaque: #0a0814;
+  --text-color: #c0b8d8;
+  --text-muted-color: #706880;
+  --glow-primary: #8a2be2;
+  --glow-secondary: #483d8b;
+  --glow-accent: #ff00ff;
+  --glow-best-value: #da70d6;
+  --glow-primary-rgb: 138, 43, 226;
+  --glow-accent-rgb: 255, 0, 255;
+  --glow-secondary-rgb: 72, 61, 139;
+
+  --star-color: rgba(200, 190, 230, 0.5);
+  --star-opacity-min: 0.15;
+  --star-opacity-max: 0.5;
+  --rain-color-rgb: var(--glow-accent-rgb);
+  --rain-opacity: 0.06;
+  --rain-border-radius: 0;
+  --orbital-opacity-min: 0.08;
+  --orbital-opacity-mid: 0.12;
+  --orbital-opacity-max: 0.18;
+  --galaxy-opacity: 0.15;
+
+  /* Theme-specific variables for cart/checkout items (FALLBACKS) */
+  /* These will be overridden by .theme-X classes if body has that theme,
+       but CartItem can use these directly if body has no theme or a different one */
+  --mc-card-bg-opaque-rgb: 60, 75, 50;
+  --mc-glow-primary-rgb: 160, 136, 96;
+  --mc-text-color: #c0b8a8;
+  --mc-text-color-highlight: #d8ccb8;
+  --mc-text-muted-color: #a09078;
+  --mc-text-color-strong: #e0d8c0;
+  --mc-glow-accent: #50c878;
+  --mc-glow-accent-rgb: 80, 200, 120;
+  --mc-bg-darker-rgb: 30, 40, 25;
+  --glow-primary-minecraft: var(--mc-glow-accent); /* For mini cart border */
+
+  --fn-card-bg-opaque-rgb: 25, 15, 50;
+  --fn-glow-primary-rgb: 138, 43, 226;
+  --fn-text-color: #d8c8f0;
+  --fn-text-color-highlight: #e8d8ff;
+  --fn-text-muted-color: #b0a0c8;
+  --fn-text-color-strong: #f0e0ff;
+  --fn-glow-accent: #00ffff;
+  --fn-glow-accent-rgb: 0, 255, 255;
+  --fn-bg-darker-rgb: 15, 5, 30;
+  --glow-primary-fortnite: var(--fn-glow-accent); /* For mini cart border */
+
+  --cod-card-bg-opaque-rgb: 28, 32, 28;
+  --cod-glow-primary-rgb: 255, 140, 0;
+  --cod-text-color: #a8b0a8;
+  --cod-text-color-highlight: #c0c8c0;
+  --cod-text-muted-color: #889088;
+  --cod-text-color-strong: #d0d8d0;
+  --cod-glow-accent: #f0e68c;
+  --cod-glow-accent-rgb: 240, 230, 140;
+  --cod-bg-darker-rgb: 10, 12, 10;
+  --glow-primary-cod: var(--cod-glow-accent); /* For mini cart border */
+}
+
+/* Minecraft Theme */
+.theme-minecraft {
+  --bg-color-space: #1a232a;
+  --bg-color: #1a232a;
+  --card-bg-color: rgba(60, 75, 50, 0.88);
+  --card-bg-color-opaque: #3c4b32;
+  --text-color: #c0b8a8;
+  --text-muted-color: #807868;
+  --glow-primary: #a08860;
+  --glow-secondary: #706040;
+  --glow-accent: #50c878;
+  --glow-best-value: #b8a070;
+  --glow-primary-rgb: 160, 136, 96;
+  --glow-accent-rgb: 80, 200, 120;
+  --glow-secondary-rgb: 112, 96, 64;
+  --star-color: rgba(220, 220, 180, 0.6);
+  --star-opacity-min: 0.25;
+  --star-opacity-max: 0.7;
+  --rain-color-rgb: 100, 120, 80;
+  --rain-opacity: 0.12;
+  --rain-border-radius: 2px;
+  --galaxy-opacity: 0.03;
+
+  /* Specific overrides for Minecraft theme items */
+  --mc-card-bg-opaque-rgb: 60, 75, 50;
+  --mc-glow-primary-rgb: 160, 136, 96;
+  --mc-text-color: #c0b8a8;
+  --mc-text-color-highlight: #d8ccb8;
+  --mc-text-muted-color: #a09078;
+  --mc-text-color-strong: #e0d8c0;
+  --mc-glow-accent: #50c878;
+  --mc-glow-accent-rgb: 80, 200, 120;
+  --mc-bg-darker-rgb: 30, 40, 25;
+  --glow-primary-minecraft: var(--mc-glow-accent);
+}
+
+/* Fortnite Theme */
+.theme-fortnite {
+  --bg-color-space: #100820;
+  --bg-color: #100820;
+  --card-bg-color: rgba(25, 15, 50, 0.9);
+  --card-bg-color-opaque: #190f32;
+  --text-color: #d8c8f0;
+  --text-muted-color: #9080a8;
+  --glow-primary: #8a2be2;
+  --glow-secondary: #4b0082;
+  --glow-accent: #00ffff;
+  --glow-best-value: #da70d6;
+  --glow-primary-rgb: 138, 43, 226;
+  --glow-accent-rgb: 0, 255, 255;
+  --glow-secondary-rgb: 75, 0, 130;
+  --star-color: rgba(200, 180, 255, 0.4);
+  --rain-color-rgb: 176, 0, 176;
+  --rain-opacity: 0.06;
+  --galaxy-opacity: 0.2;
+
+  /* Specific overrides for Fortnite theme items */
+  --fn-card-bg-opaque-rgb: 25, 15, 50;
+  --fn-glow-primary-rgb: 138, 43, 226;
+  --fn-text-color: #d8c8f0;
+  --fn-text-color-highlight: #e8d8ff;
+  --fn-text-muted-color: #b0a0c8;
+  --fn-text-color-strong: #f0e0ff;
+  --fn-glow-accent: #00ffff;
+  --fn-glow-accent-rgb: 0, 255, 255;
+  --fn-bg-darker-rgb: 15, 5, 30;
+  --glow-primary-fortnite: var(--fn-glow-accent);
+}
+
+/* Call of Duty Theme */
+.theme-cod {
+  --bg-color-space: #0a0c0a;
+  --bg-color: #0a0c0a;
+  --card-bg-color: rgba(28, 32, 28, 0.92);
+  --card-bg-color-opaque: #1c201c;
+  --text-color: #a8b0a8;
+  --text-muted-color: #687068;
+  --glow-primary: #ff8c00;
+  --glow-secondary: #556b2f;
+  --glow-accent: #f0e68c;
+  --glow-best-value: #ffa500;
+  --glow-primary-rgb: 255, 140, 0;
+  --glow-accent-rgb: 240, 230, 140;
+  --glow-secondary-rgb: 85, 107, 47;
+  --star-color: rgba(180, 180, 170, 0.3);
+  --star-opacity-min: 0.05;
+  --star-opacity-max: 0.3;
+  --rain-color-rgb: 100, 100, 90;
+  --rain-opacity: 0.05;
+  --galaxy-opacity: 0.02;
+
+  /* Specific overrides for CoD theme items */
+  --cod-card-bg-opaque-rgb: 28, 32, 28;
+  --cod-glow-primary-rgb: 255, 140, 0;
+  --cod-text-color: #a8b0a8;
+  --cod-text-color-highlight: #c0c8c0;
+  --cod-text-muted-color: #889088;
+  --cod-text-color-strong: #d0d8d0;
+  --cod-glow-accent: #f0e68c;
+  --cod-glow-accent-rgb: 240, 230, 140;
+  --cod-bg-darker-rgb: 10, 12, 10;
+  --glow-primary-cod: var(--cod-glow-accent);
+}
+
+/* Global Resets and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 15px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  transition:
+    background-color var(--transition-speed) ease,
+    color var(--transition-speed) ease;
+}
+
+#foreground-event-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+}
+#foreground-event-layer > * {
+  pointer-events: none;
+}
+#foreground-event-layer svg,
+#foreground-event-layer div {
+  pointer-events: none;
+}
+
+/* Styles for the main content container, titles, etc. */
+.container {
+  background-color: var(--card-bg-color);
+  backdrop-filter: blur(8px);
+  padding: 25px 35px;
+  border-radius: var(--border-radius);
+  width: 100%;
+  max-width: 700px;
+  text-align: center;
+  animation: fadeInContainer var(--animation-speed-slow) 0.8s ease-out forwards;
+  opacity: 0;
+  border: 1px solid rgba(var(--glow-primary-rgb), 0.2);
+  box-shadow:
+    0 0 15px rgba(var(--glow-primary-rgb), 0.06),
+    0 0 25px rgba(var(--glow-primary-rgb), 0.04),
+    inset 0 0 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10;
+  transition:
+    background-color var(--transition-speed) ease,
+    border-color var(--transition-speed) ease,
+    box-shadow var(--transition-speed) ease;
+}
+@keyframes fadeInContainer {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.main-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 8px;
+  animation:
+    subtleTextGlow var(--animation-speed-very-slow) infinite alternate,
+    slideInDownSlow var(--animation-speed-slow) 1.2s ease-out forwards;
+  color: var(--text-color);
+  opacity: 0;
+  transition:
+    color var(--transition-speed) ease,
+    text-shadow var(--transition-speed) ease;
+}
+@keyframes subtleTextGlow {
+  0% {
+    text-shadow:
+      0 0 2px rgba(var(--glow-primary-rgb), 0.2),
+      0 0 4px rgba(var(--glow-primary-rgb), 0.08);
+  }
+  100% {
+    text-shadow:
+      0 0 4px rgba(var(--glow-primary-rgb), 0.25),
+      0 0 7px rgba(var(--glow-primary-rgb), 0.12);
+  }
+}
+@keyframes slideInDownSlow {
+  from {
+    opacity: 0;
+    transform: translateY(-25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subtitle {
+  font-size: 0.9em;
+  color: var(--text-muted-color);
+  margin-bottom: 25px;
+  animation: fadeInUpSlow var(--animation-speed-slow) 1.5s ease-out forwards;
+  opacity: 0;
+  transition: color var(--transition-speed) ease;
+}
+@keyframes fadeInUpSlow {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* General styled button for reuse */
+.styled-button {
+  padding: 10px 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--text-color);
+  background: linear-gradient(
+    90deg,
+    rgba(var(--glow-primary-rgb), 0.2),
+    rgba(var(--glow-accent-rgb), 0.25)
+  );
+  border: 1px solid rgba(var(--glow-accent-rgb), 0.5);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all var(--transition-speed) ease;
+  box-shadow: 0 0 8px rgba(var(--glow-accent-rgb), 0.15);
+  text-decoration: none; /* For router-link usage */
+  display: inline-block; /* For router-link usage */
+}
+.styled-button:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--glow-primary-rgb), 0.25),
+    rgba(var(--glow-accent-rgb), 0.3)
+  );
+  border-color: rgba(var(--glow-accent-rgb), 0.7);
+  box-shadow:
+    0 0 12px rgba(var(--glow-accent-rgb), 0.25),
+    0 0 15px rgba(var(--glow-accent-rgb), 0.1);
+  transform: translateY(-2px);
+}
+.styled-button:active {
+  transform: translateY(0px);
+  background: rgba(var(--glow-accent-rgb), 0.1);
+}
+
+/* Media Queries */
+/* Adjusting .container max-width for cart and checkout specifically */
+.cart-page.container,
+.checkout-page.container {
+  /* Target .container when it has these page classes */
+  max-width: 900px; /* Wider for cart and checkout layouts */
+}
+
+@media (max-width: 768px) {
+  .cart-page.container,
+  .checkout-page.container {
+    max-width: 600px; /* Adjust for tablet */
+  }
+}
+
+@media (max-width: 650px) {
+  .container {
+    max-width: 450px;
+    padding: 20px 25px;
+  }
+}
+@media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  .container {
+    padding: 15px 20px;
+  }
+  .main-title {
+    font-size: 1.7em;
+  }
+  .subtitle {
+    font-size: 0.8em;
+    margin-bottom: 20px;
+  }
+  .cart-page.container,
+  .checkout-page.container {
+    max-width: 100%; /* Full width on very small screens */
+  }
+}
