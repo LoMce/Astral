@@ -3,15 +3,18 @@
     <ImmersiveBackground :selected-game="activeThemeGame" />
     <MinecraftEffects
       v-if="activeThemeGame === 'minecraft'"
-      class="game-specific-effects-container active-effect"
+      class="game-specific-effects-container"
+      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
     />
     <FortniteEffects
       v-if="activeThemeGame === 'fortnite'"
-      class="game-specific-effects-container active-effect"
+      class="game-specific-effects-container"
+      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
     />
     <CODEffects
       v-if="activeThemeGame === 'cod'"
-      class="game-specific-effects-container active-effect"
+      class="game-specific-effects-container"
+      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
     />
   </div>
   <div id="foreground-event-layer"></div>
@@ -19,7 +22,9 @@
   <header class="app-header">
     <nav>
       <!-- Empty div for spacing to help center the logo -->
-      <div class="nav-spacer-left"></div>
+      <div class="nav-spacer-left">
+        <AnimationToggle />
+      </div>
 
       <router-link to="/" class="nav-logo-link" @click="handleLogoClick">
         <img src="/favicon.ico" alt="Site Logo" class="nav-logo-img" />
@@ -68,7 +73,10 @@ import FortniteEffects from './components/BackgroundEffects/FortniteEffects.vue'
 import CODEffects from './components/BackgroundEffects/CODEffects.vue'
 import CartIcon from './components/CartIcon.vue'
 import MiniCart from './components/MiniCart.vue'
+import AnimationToggle from './components/AnimationToggle.vue' // Import the new component
+import { useUiSettingsStore } from '@/stores/uiSettings' // Import the UI settings store
 
+const uiSettingsStore = useUiSettingsStore() // Initialize the store
 const activeThemeGame = ref(localStorage.getItem('activeThemeGame') || '')
 const route = useRoute()
 const router = useRouter()
@@ -150,6 +158,15 @@ watch(route, (to) => {
   }
 })
 
+watch(isMiniCartOpen, (newVal, oldVal) => {
+  if (oldVal === true && newVal === false) {
+    // MiniCart was open and is now closed
+    if (cartIconRef.value) {
+      cartIconRef.value.focus()
+    }
+  }
+})
+
 onMounted(() => {
   // When App.vue mounts, establish the initial theme state.
   // If the current path is home, HomePage.vue's onMounted will emit to neutralize.
@@ -178,6 +195,7 @@ const closeMiniCart = () => {
 }
 
 const startFlyToCartAnimation = (startElement, itemLogo) => {
+  if (!uiSettingsStore.animationsEnabled) return; // Skip animation if disabled
   if (!startElement || !cartIconRef.value) return
 
   const startRect = startElement.getBoundingClientRect()

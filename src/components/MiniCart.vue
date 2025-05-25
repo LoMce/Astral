@@ -2,11 +2,13 @@
   <transition name="minicart-fade">
     <div v-if="isOpen" class="mini-cart-overlay" @click.self="$emit('close')">
       <div
+        ref="miniCartContainerRef"
         class="mini-cart-container"
         :class="themeClass"
         role="dialog"
         aria-modal="true"
         aria-labelledby="mini-cart-title"
+        @keydown="handleKeyDown"
       >
         <div class="mini-cart-header">
           <h3 id="mini-cart-title">Your Cart</h3>
@@ -75,7 +77,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineProps, defineEmits, watch, nextTick, ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { RouterLink } from 'vue-router' // Explicitly import RouterLink if needed, though usually auto-imported in Vue 3 projects
 
@@ -83,14 +85,69 @@ const props = defineProps({
   isOpen: Boolean,
   activeTheme: String, // Pass current page theme for modal backdrop consistency
 })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const cartStore = useCartStore()
+const miniCartContainerRef = ref(null)
 
 const themeClass = computed(() => {
   // Apply the page's active theme to the minicart itself for consistent styling
   return props.activeTheme ? `theme-${props.activeTheme}` : ''
 })
+
+function getFocusableElements(container) {
+  if (!container) return []
+  return Array.from(
+    container.querySelectorAll(
+      'a[href]:not([disabled]), button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter(el => el.offsetWidth > 0 && el.offsetHeight > 0) // Filter out hidden elements
+}
+
+function focusFirstElement() {
+  if (miniCartContainerRef.value) {
+    const focusable = getFocusableElements(miniCartContainerRef.value)
+    if (focusable.length > 0) {
+      focusable[0].focus()
+    }
+  }
+}
+
+watch(
+  () => props.isOpen,
+  (newIsOpen) => {
+    if (newIsOpen) {
+      nextTick(() => {
+        focusFirstElement()
+      })
+    }
+  }
+)
+
+const handleKeyDown = (event) => {
+  if (event.key === 'Tab' && miniCartContainerRef.value) {
+    const focusableElements = getFocusableElements(miniCartContainerRef.value)
+    if (focusableElements.length === 0) return
+
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
+    const currentElement = document.activeElement
+
+    if (event.shiftKey) {
+      // Shift + Tab
+      if (currentElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      }
+    } else {
+      // Tab
+      if (currentElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+  }
+}
 </script>
 
 <style scoped>

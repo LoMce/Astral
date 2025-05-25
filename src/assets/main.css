@@ -251,6 +251,42 @@ body {
     border-color var(--transition-speed) ease,
     box-shadow var(--transition-speed) ease;
 }
+
+/* Global Focus Styles */
+a:focus-visible,
+button:focus-visible,
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible,
+input[type="search"]:focus-visible,
+input[type="number"]:focus-visible,
+input[type="tel"]:focus-visible,
+input[type="url"]:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.styled-button:focus-visible,
+.cart-button-wrapper > button:focus-visible, /* Target button inside wrapper */
+.close-button:focus-visible, /* MiniCart close button */
+.item-remove-button:focus-visible, /* MiniCart item remove button */
+/* Payment buttons in CheckoutPage.vue - assuming they might be generic buttons or have a common class */
+/* If they have specific classes like .payment-button, add them here */
+.paypal-button:focus-visible, /* Example if PayPal button has this class */
+.stripe-button:focus-visible, /* Example if Stripe button has this class */
+.custom-select-selected:focus-visible /* GameSelector custom trigger */ {
+  outline: 2px solid var(--glow-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--glow-accent); /* Optional subtle glow */
+  /* Ensure focus is distinct from hover, e.g. if hover has a transform */
+  transform: none; /* Reset any transform from hover */
+}
+
+/* Additional consideration for elements that might already have complex box-shadows or borders */
+/* For example, if .styled-button has a hover box-shadow, ensure focus style is more prominent */
+.styled-button:focus-visible {
+  box-shadow: 0 0 8px var(--glow-accent), 0 0 12px rgba(var(--glow-accent-rgb), 0.3); /* Combine or make stronger */
+}
+
+
 @keyframes fadeInContainer {
   from {
     opacity: 0;

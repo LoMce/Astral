@@ -1,5 +1,5 @@
 <template>
-  <div class="fortnite-effects">
+  <div class="fortnite-effects" :class="{ 'animations-disabled': !uiSettingsStore.animationsEnabled }">
     <div
       v-for="wisp in wisps"
       :key="'fn-wisp-' + wisp.id"
@@ -34,8 +34,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useUiSettingsStore } from '@/stores/uiSettings'
 
+const uiSettingsStore = useUiSettingsStore()
 const wisps = ref([])
 const energyOrbs = ref([])
 const comets = ref([])
@@ -43,6 +45,12 @@ const zeroPointButterflies = ref([])
 
 const createFortniteEffects = () => {
   wisps.value = []
+  energyOrbs.value = []
+  comets.value = []
+  zeroPointButterflies.value = []
+
+  if (!uiSettingsStore.animationsEnabled) return
+
   const numWisps = 6
   for (let i = 0; i < numWisps; i++) {
     wisps.value.push({
@@ -60,7 +68,6 @@ const createFortniteEffects = () => {
     })
   }
 
-  energyOrbs.value = []
   const numOrbs = 8
   const orbSizeMin = 4,
     orbSizeMax = 10
@@ -93,7 +100,6 @@ const createFortniteEffects = () => {
     })
   }
 
-  comets.value = []
   const numComets = 1
   for (let i = 0; i < numComets; i++) {
     const startX = -10
@@ -113,7 +119,6 @@ const createFortniteEffects = () => {
     })
   }
 
-  zeroPointButterflies.value = []
   const numButterflies = 3
   const butterflyInsetMargin = 15
 
@@ -153,7 +158,20 @@ const createFortniteEffects = () => {
 }
 
 onMounted(() => {
-  createFortniteEffects()
+  if (uiSettingsStore.animationsEnabled) {
+    createFortniteEffects()
+  }
+})
+
+watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
+  if (newValue) {
+    createFortniteEffects()
+  } else {
+    wisps.value = []
+    energyOrbs.value = []
+    comets.value = []
+    zeroPointButterflies.value = []
+  }
 })
 </script>
 
@@ -184,6 +202,10 @@ onMounted(() => {
   animation-timing-function: ease-in-out, forwards;
   animation-iteration-count: infinite, 1;
   animation-fill-mode: none, forwards;
+  animation-play-state: running;
+}
+.animations-disabled .fn-rift-energy-wisps {
+  animation-play-state: paused !important;
 }
 @keyframes fnWispDrift {
   0% {
@@ -221,6 +243,10 @@ onMounted(() => {
   animation-timing-function: linear, ease-in-out;
   animation-iteration-count: infinite, infinite;
   animation-direction: normal, alternate;
+  animation-play-state: running;
+}
+.animations-disabled .fn-energy-orb {
+  animation-play-state: paused !important;
 }
 @keyframes fnOrbDrift {
   0% {
@@ -256,8 +282,12 @@ onMounted(() => {
   animation-timing-function: ease-in;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
+  animation-play-state: running;
   z-index: 1;
   filter: blur(1px);
+}
+.animations-disabled .fn-comet {
+  animation-play-state: paused !important;
 }
 .fn-comet-tail {
   position: absolute;
@@ -271,8 +301,12 @@ onMounted(() => {
   transform: translate(-50%, -2px) rotate(180deg);
   opacity: 0;
   animation: fnCometTailGrow 1s 0.2s ease-out forwards;
-  animation-duration: inherit;
-  animation-delay: inherit;
+  animation-duration: inherit; /* This might not work as expected for sub-elements if parent is paused */
+  animation-delay: inherit; /* Same as above */
+  animation-play-state: running; /* Default state */
+}
+.animations-disabled .fn-comet-tail {
+  animation-play-state: paused !important; /* Explicitly pause tail if parent is paused */
 }
 @keyframes fnCometArc {
   0% {
@@ -313,7 +347,11 @@ onMounted(() => {
   animation-timing-function: ease-in-out, ease-in-out;
   animation-iteration-count: 1, 1;
   animation-fill-mode: forwards, forwards;
+  animation-play-state: running; /* Default state */
   z-index: 1;
+}
+.animations-disabled .fn-zero-point-butterfly {
+  animation-play-state: paused !important; /* Pause main butterfly movement and opacity */
 }
 
 @keyframes fnButterflyDrift {
@@ -367,6 +405,10 @@ onMounted(() => {
   animation-iteration-count: infinite;
   animation-timing-function: ease-in-out;
   animation-delay: inherit; /* Inherits from .fn-zero-point-butterfly */
+  animation-play-state: running; /* Default state for wings */
+}
+.animations-disabled .fn-butterfly-wing {
+  animation-play-state: paused !important; /* Pause wing flapping */
 }
 .fn-butterfly-wing-left {
   left: 0;

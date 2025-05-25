@@ -1,5 +1,5 @@
 <template>
-  <div class="immersive-background-effects">
+  <div class="immersive-background-effects" :class="{ 'animations-disabled': !uiSettingsStore.animationsEnabled }">
     <div
       id="galaxy-layer"
       :style="{
@@ -25,7 +25,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useUiSettingsStore } from '@/stores/uiSettings'
+
+const uiSettingsStore = useUiSettingsStore()
 
 const props = defineProps({
   selectedGame: {
@@ -34,36 +37,35 @@ const props = defineProps({
   },
 })
 
+// Import SVG strings
+import { defaultGalaxySvgString } from '@/assets/svgs/defaultGalaxy.js'
+import { minecraftGalaxySvgString } from '@/assets/svgs/minecraftGalaxy.js'
+import { fortniteGalaxySvgString } from '@/assets/svgs/fortniteGalaxy.js'
+import { codGalaxySvgString } from '@/assets/svgs/codGalaxy.js'
+
 const stars = ref([])
 const rainStreaks = ref([])
 const orbitalParticles = ref([])
 
-// --- SVG Galaxy Definitions ---
-const defaultGalaxySvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><filter id="blurMe"><feGaussianBlur in="SourceGraphic" stdDeviation="15" /></filter><radialGradient id="gCore" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(72, 61, 139,0.15)"/><stop offset="40%" stop-color="rgba(138, 43, 226,0.08)"/><stop offset="100%" stop-color="rgba(3, 2, 8,0)"/></radialGradient><linearGradient id="gArm1" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="rgba(255, 0, 255,0)"/><stop offset="50%" stop-color="rgba(255, 0, 255,0.1)"/><stop offset="100%" stop-color="rgba(255, 0, 255,0)"/></linearGradient></defs><rect width="100%" height="100%" fill="%23030208"/><rect width="100%" height="100%" fill="url(%23gCore)" /><ellipse cx="50%" cy="50%" rx="45%" ry="20%" fill="url(%23gArm1)" transform="rotate(30 400 300)" opacity="0.4"/><rect width="100%" height="100%" style="filter:url(%23blurMe);" opacity="0.7"/></svg>`
-
-const minecraftGalaxySvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><filter id="blurMe"><feGaussianBlur in="SourceGraphic" stdDeviation="15" /></filter><radialGradient id="gCore" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(112, 96, 64,0.15)"/><stop offset="40%" stop-color="rgba(160, 136, 96,0.08)"/><stop offset="100%" stop-color="rgba(26, 35, 42,0)"/></radialGradient><linearGradient id="gArm1" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="rgba(80, 200, 120,0)"/><stop offset="50%" stop-color="rgba(80, 200, 120,0.1)"/><stop offset="100%" stop-color="rgba(80, 200, 120,0)"/></linearGradient></defs><rect width="100%" height="100%" fill="%231a232a"/><rect width="100%" height="100%" fill="url(%23gCore)" /><ellipse cx="50%" cy="50%" rx="45%" ry="20%" fill="url(%23gArm1)" transform="rotate(30 400 300)" opacity="0.4"/><rect width="100%" height="100%" style="filter:url(%23blurMe);" opacity="0.7"/></svg>`
-
-const fortniteGalaxySvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><filter id="blurMe"><feGaussianBlur in="SourceGraphic" stdDeviation="15" /></filter><radialGradient id="gCore" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(75, 0, 130,0.15)"/><stop offset="40%" stop-color="rgba(138, 43, 226,0.08)"/><stop offset="100%" stop-color="rgba(16, 8, 32,0)"/></radialGradient><linearGradient id="gArm1" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="rgba(0, 255, 255,0)"/><stop offset="50%" stop-color="rgba(0, 255, 255,0.1)"/><stop offset="100%" stop-color="rgba(0, 255, 255,0)"/></linearGradient></defs><rect width="100%" height="100%" fill="%23100820"/><rect width="100%" height="100%" fill="url(%23gCore)" /><ellipse cx="50%" cy="50%" rx="45%" ry="20%" fill="url(%23gArm1)" transform="rotate(30 400 300)" opacity="0.4"/><rect width="100%" height="100%" style="filter:url(%23blurMe);" opacity="0.7"/></svg>`
-
-const codGalaxySvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><defs><filter id="blurMe"><feGaussianBlur in="SourceGraphic" stdDeviation="15" /></filter><radialGradient id="gCore" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(85, 107, 47,0.15)"/><stop offset="40%" stop-color="rgba(255, 140, 0,0.08)"/><stop offset="100%" stop-color="rgba(10, 12, 10,0)"/></radialGradient><linearGradient id="gArm1" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="rgba(240, 230, 140,0)"/><stop offset="50%" stop-color="rgba(240, 230, 140,0.1)"/><stop offset="100%" stop-color="rgba(240, 230, 140,0)"/></linearGradient></defs><rect width="100%" height="100%" fill="%230a0c0a"/><rect width="100%" height="100%" fill="url(%23gCore)" /><ellipse cx="50%" cy="50%" rx="45%" ry="20%" fill="url(%23gArm1)" transform="rotate(30 400 300)" opacity="0.4"/><rect width="100%" height="100%" style="filter:url(%23blurMe);" opacity="0.7"/></svg>`
-// Note: %23 is the URL encoding for #, used for hex colors in fill attributes.
+// Note: %23 is the URL encoding for #, used for hex colors in fill attributes within the SVG strings.
 
 const galaxySvgUrl = computed(() => {
   switch (props.selectedGame) {
     case 'minecraft':
-      return minecraftGalaxySvg
+      return minecraftGalaxySvgString
     case 'fortnite':
-      return fortniteGalaxySvg
+      return fortniteGalaxySvgString
     case 'cod':
-      return codGalaxySvg
+      return codGalaxySvgString
     default:
-      return defaultGalaxySvg
+      return defaultGalaxySvgString
   }
 })
 
 const createStars = () => {
   stars.value = []
-  const numStars = 60
+  if (!uiSettingsStore.animationsEnabled) return;
+  const numStars = 30 // Reduced from 60
   for (let i = 0; i < numStars; i++) {
     const size = Math.random() * 1.2 + 0.15
     const startX = Math.random() * 100
@@ -91,7 +93,8 @@ const createStars = () => {
 
 const createRainStreaks = () => {
   rainStreaks.value = []
-  const numRainStreaks = 30
+  if (!uiSettingsStore.animationsEnabled) return;
+  const numRainStreaks = 15 // Reduced from 30
   for (let i = 0; i < numRainStreaks; i++) {
     rainStreaks.value.push({
       id: i,
@@ -108,17 +111,19 @@ const createRainStreaks = () => {
 
 const createOrbitalParticles = () => {
   orbitalParticles.value = []
-  const numOrbitals = 1
+  if (!uiSettingsStore.animationsEnabled) return;
+  const numOrbitals = 1 // Was 1, effectively showing only 'primary'. Set to 3 to see all.
   if (numOrbitals > 0) {
     const orbitalColorClasses = ['primary', 'accent', 'secondary']
     for (let i = 0; i < numOrbitals; i++) {
-      const size = Math.random() * 7 + 3
+      const size = Math.random() * 7 + 3 // Range: 3px to 10px
       orbitalParticles.value.push({
         id: i,
         particleClass: orbitalColorClasses[i % orbitalColorClasses.length],
         style: {
           width: `${size}px`,
           height: `${size}px`,
+          // Ensure particles are spread out across the viewport, not just center
           '--x-start': `${Math.random() * 60 + 20}vw`,
           '--y-start': `${Math.random() * 60 + 20}vh`,
           '--x-mid1': `${Math.random() * 60 + 20}vw`,
@@ -136,10 +141,27 @@ const createOrbitalParticles = () => {
 }
 
 onMounted(() => {
-  createStars()
-  createRainStreaks()
-  createOrbitalParticles()
+  if (uiSettingsStore.animationsEnabled) {
+    createStars()
+    createRainStreaks()
+    createOrbitalParticles()
+  }
 })
+
+watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
+  if (newValue) {
+    // Re-create effects when animations are enabled
+    createStars()
+    createRainStreaks()
+    createOrbitalParticles()
+  } else {
+    // Clear effects when animations are disabled
+    stars.value = []
+    rainStreaks.value = []
+    orbitalParticles.value = []
+  }
+})
+
 </script>
 
 <style scoped>
@@ -162,11 +184,18 @@ onMounted(() => {
   height: 150%;
   background-size: cover;
   background-position: center center;
-  animation: slowRotateGalaxy 300s linear infinite;
+  animation-name: slowRotateGalaxy;
+  animation-duration: 300s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: running; /* Default state */
   z-index: -1;
   transition:
     opacity var(--transition-speed) ease,
     background-image var(--transition-speed) ease; /* Smooth transition for new SVG */
+}
+.animations-disabled #galaxy-layer {
+  animation-play-state: paused !important;
 }
 @keyframes slowRotateGalaxy {
   0% {
@@ -185,7 +214,13 @@ onMounted(() => {
   animation-timing-function: ease-in-out, linear;
   animation-iteration-count: infinite, infinite;
   animation-direction: alternate, normal;
+  animation-play-state: running; /* Default state */
   transition: background-color var(--transition-speed) ease;
+}
+.animations-disabled .star {
+  animation-play-state: paused !important;
+  /* Optionally hide them completely if paused state is not visually appealing */
+  /* opacity: 0 !important; */
 }
 @keyframes twinkle-smooth {
   0% {
@@ -222,8 +257,13 @@ onMounted(() => {
   animation-name: fall-rain;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  animation-play-state: running; /* Default state */
   transition: background var(--transition-speed) ease;
   border-radius: var(--rain-border-radius, 0);
+}
+.animations-disabled .rain-streak {
+  animation-play-state: paused !important;
+  /* opacity: 0 !important; */
 }
 @keyframes fall-rain {
   to {
@@ -245,11 +285,16 @@ onMounted(() => {
   animation-timing-function: linear, ease-out;
   animation-iteration-count: infinite, 1;
   animation-fill-mode: forwards;
+  animation-play-state: running; /* Default state */
   z-index: 1;
   filter: blur(2.5px);
   transition:
     background-color var(--transition-speed) ease,
     box-shadow var(--transition-speed) ease;
+}
+.animations-disabled .orbital-particle {
+  animation-play-state: paused !important;
+  /* opacity: 0 !important; */
 }
 .orbital-particle.primary {
   background-color: var(--glow-primary);
