@@ -1,5 +1,5 @@
 <template>
-  <div class="minecraft-effects" :class="{ 'animations-disabled': !uiSettingsStore.animationsEnabled }">
+  <div class="minecraft-effects">
     <div
       v-for="block in blocks"
       :key="'mc-block-' + block.id"
@@ -24,10 +24,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useUiSettingsStore } from '@/stores/uiSettings'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+// useUiSettingsStore and watch removed
 
-const uiSettingsStore = useUiSettingsStore()
+// uiSettingsStore removed
 const blocks = ref([])
 const dust = ref([])
 const enderParticles = ref([])
@@ -40,11 +40,9 @@ const createMinecraftEffects = () => {
   dust.value = []
   enderParticles.value = []
 
-  if (!uiSettingsStore.animationsEnabled) {
-    if (creeperTimeout) clearTimeout(creeperTimeout)
-    showCreeperFace.value = false
-    return
-  }
+  // Removed check for uiSettingsStore.animationsEnabled
+  // if (creeperTimeout) clearTimeout(creeperTimeout) // This logic is now only in the watcher/onBeforeUnmount
+  // showCreeperFace.value = false
 
   const numBlocks = 4
   for (let i = 0; i < numBlocks; i++) {
@@ -97,10 +95,8 @@ const createMinecraftEffects = () => {
 
 const triggerCreeperFace = () => {
   if (creeperTimeout) clearTimeout(creeperTimeout)
-  if (!uiSettingsStore.animationsEnabled) {
-    showCreeperFace.value = false
-    return
-  }
+  // Removed check for uiSettingsStore.animationsEnabled
+  // showCreeperFace.value = false
 
   showCreeperFace.value = true
   const size = Math.random() * 50 + 80 // px
@@ -121,24 +117,12 @@ const triggerCreeperFace = () => {
 }
 
 onMounted(() => {
-  if (uiSettingsStore.animationsEnabled) {
-    createMinecraftEffects()
-    triggerCreeperFace()
-  }
+  // Effects created and triggered unconditionally
+  createMinecraftEffects()
+  triggerCreeperFace()
 })
 
-watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
-  if (newValue) {
-    createMinecraftEffects()
-    triggerCreeperFace()
-  } else {
-    blocks.value = []
-    dust.value = []
-    enderParticles.value = []
-    if (creeperTimeout) clearTimeout(creeperTimeout)
-    showCreeperFace.value = false
-  }
-})
+// Watch for uiSettingsStore.animationsEnabled removed
 
 onBeforeUnmount(() => {
   if (creeperTimeout) clearTimeout(creeperTimeout)
@@ -166,9 +150,7 @@ onBeforeUnmount(() => {
   animation-fill-mode: none, forwards;
   animation-play-state: running;
 }
-.animations-disabled .mc-block-shadow {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .mc-block-shadow removed */
 @keyframes mcDriftBlock {
   0% {
     transform: translate(var(--x-start), var(--y-start)) rotate(0deg);
@@ -202,9 +184,7 @@ onBeforeUnmount(() => {
   animation-direction: normal, alternate;
   animation-play-state: running;
 }
-.animations-disabled .mc-pixel-dust {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .mc-pixel-dust removed */
 @keyframes mcDustDrift {
   0% {
     transform: translate(var(--x-start), var(--y-start)) rotate(0deg);
@@ -241,9 +221,7 @@ onBeforeUnmount(() => {
   animation-iteration-count: infinite;
   animation-play-state: running;
 }
-.animations-disabled .mc-ender-particle {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .mc-ender-particle removed */
 @keyframes mcEnderParticleFloat {
   0% {
     opacity: 0;
@@ -276,10 +254,7 @@ onBeforeUnmount(() => {
   filter: blur(1px);
   z-index: 1; /* Above other block shadows if needed */
 }
-.animations-disabled .mc-creeper-face-silhouette {
-  animation-play-state: paused !important;
-  /* opacity: 0 !important; */ /* Alternative: hide it */
-}
+/* .animations-disabled .mc-creeper-face-silhouette removed */
 @keyframes mcCreeperFade {
   0% {
     opacity: 0;

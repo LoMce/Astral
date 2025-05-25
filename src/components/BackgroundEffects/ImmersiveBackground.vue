@@ -1,5 +1,5 @@
 <template>
-  <div class="immersive-background-effects" :class="{ 'animations-disabled': !uiSettingsStore.animationsEnabled }">
+  <div class="immersive-background-effects">
     <div
       id="galaxy-layer"
       :style="{
@@ -25,10 +25,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useUiSettingsStore } from '@/stores/uiSettings'
+import { ref, onMounted, computed } from 'vue'
+// useUiSettingsStore and watch removed
 
-const uiSettingsStore = useUiSettingsStore()
+// uiSettingsStore removed
 
 const props = defineProps({
   selectedGame: {
@@ -64,7 +64,7 @@ const galaxySvgUrl = computed(() => {
 
 const createStars = () => {
   stars.value = []
-  if (!uiSettingsStore.animationsEnabled) return;
+  // Removed check for uiSettingsStore.animationsEnabled
   const numStars = 30 // Reduced from 60
   for (let i = 0; i < numStars; i++) {
     const size = Math.random() * 1.2 + 0.15
@@ -93,7 +93,7 @@ const createStars = () => {
 
 const createRainStreaks = () => {
   rainStreaks.value = []
-  if (!uiSettingsStore.animationsEnabled) return;
+  // Removed check for uiSettingsStore.animationsEnabled
   const numRainStreaks = 15 // Reduced from 30
   for (let i = 0; i < numRainStreaks; i++) {
     rainStreaks.value.push({
@@ -111,7 +111,7 @@ const createRainStreaks = () => {
 
 const createOrbitalParticles = () => {
   orbitalParticles.value = []
-  if (!uiSettingsStore.animationsEnabled) return;
+  // Removed check for uiSettingsStore.animationsEnabled
   const numOrbitals = 1 // Was 1, effectively showing only 'primary'. Set to 3 to see all.
   if (numOrbitals > 0) {
     const orbitalColorClasses = ['primary', 'accent', 'secondary']
@@ -141,26 +141,13 @@ const createOrbitalParticles = () => {
 }
 
 onMounted(() => {
-  if (uiSettingsStore.animationsEnabled) {
-    createStars()
-    createRainStreaks()
-    createOrbitalParticles()
-  }
+  // Particle creation functions called unconditionally
+  createStars()
+  createRainStreaks()
+  createOrbitalParticles()
 })
 
-watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
-  if (newValue) {
-    // Re-create effects when animations are enabled
-    createStars()
-    createRainStreaks()
-    createOrbitalParticles()
-  } else {
-    // Clear effects when animations are disabled
-    stars.value = []
-    rainStreaks.value = []
-    orbitalParticles.value = []
-  }
-})
+// Watch for uiSettingsStore.animationsEnabled removed
 
 </script>
 
@@ -194,9 +181,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
     opacity var(--transition-speed) ease,
     background-image var(--transition-speed) ease; /* Smooth transition for new SVG */
 }
-.animations-disabled #galaxy-layer {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled #galaxy-layer removed */
 @keyframes slowRotateGalaxy {
   0% {
     transform: rotate(0deg) scale(1.15);
@@ -217,11 +202,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-play-state: running; /* Default state */
   transition: background-color var(--transition-speed) ease;
 }
-.animations-disabled .star {
-  animation-play-state: paused !important;
-  /* Optionally hide them completely if paused state is not visually appealing */
-  /* opacity: 0 !important; */
-}
+/* .animations-disabled .star removed */
 @keyframes twinkle-smooth {
   0% {
     opacity: var(--star-opacity-min);
@@ -261,10 +242,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   transition: background var(--transition-speed) ease;
   border-radius: var(--rain-border-radius, 0);
 }
-.animations-disabled .rain-streak {
-  animation-play-state: paused !important;
-  /* opacity: 0 !important; */
-}
+/* .animations-disabled .rain-streak removed */
 @keyframes fall-rain {
   to {
     transform: translateY(120vh) scaleY(1.5);
@@ -292,10 +270,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
     background-color var(--transition-speed) ease,
     box-shadow var(--transition-speed) ease;
 }
-.animations-disabled .orbital-particle {
-  animation-play-state: paused !important;
-  /* opacity: 0 !important; */
-}
+/* .animations-disabled .orbital-particle removed */
 .orbital-particle.primary {
   background-color: var(--glow-primary);
   box-shadow:

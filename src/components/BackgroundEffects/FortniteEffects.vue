@@ -1,5 +1,5 @@
 <template>
-  <div class="fortnite-effects" :class="{ 'animations-disabled': !uiSettingsStore.animationsEnabled }">
+  <div class="fortnite-effects">
     <div
       v-for="wisp in wisps"
       :key="'fn-wisp-' + wisp.id"
@@ -34,10 +34,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useUiSettingsStore } from '@/stores/uiSettings'
+import { ref, onMounted } from 'vue'
+// useUiSettingsStore and watch removed
 
-const uiSettingsStore = useUiSettingsStore()
+// uiSettingsStore removed
 const wisps = ref([])
 const energyOrbs = ref([])
 const comets = ref([])
@@ -49,7 +49,7 @@ const createFortniteEffects = () => {
   comets.value = []
   zeroPointButterflies.value = []
 
-  if (!uiSettingsStore.animationsEnabled) return
+  // Removed check for uiSettingsStore.animationsEnabled
 
   const numWisps = 6
   for (let i = 0; i < numWisps; i++) {
@@ -158,21 +158,11 @@ const createFortniteEffects = () => {
 }
 
 onMounted(() => {
-  if (uiSettingsStore.animationsEnabled) {
-    createFortniteEffects()
-  }
+  // createFortniteEffects called unconditionally
+  createFortniteEffects()
 })
 
-watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
-  if (newValue) {
-    createFortniteEffects()
-  } else {
-    wisps.value = []
-    energyOrbs.value = []
-    comets.value = []
-    zeroPointButterflies.value = []
-  }
-})
+// Watch for uiSettingsStore.animationsEnabled removed
 </script>
 
 <style scoped>
@@ -204,9 +194,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-fill-mode: none, forwards;
   animation-play-state: running;
 }
-.animations-disabled .fn-rift-energy-wisps {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .fn-rift-energy-wisps removed */
 @keyframes fnWispDrift {
   0% {
     transform: translate(var(--x-start), var(--y-start)) scaleY(0.5);
@@ -245,9 +233,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-direction: normal, alternate;
   animation-play-state: running;
 }
-.animations-disabled .fn-energy-orb {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .fn-energy-orb removed */
 @keyframes fnOrbDrift {
   0% {
     transform: translate(0, 0) scale(var(--current-orb-scale, 0.7));
@@ -286,9 +272,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   z-index: 1;
   filter: blur(1px);
 }
-.animations-disabled .fn-comet {
-  animation-play-state: paused !important;
-}
+/* .animations-disabled .fn-comet removed */
 .fn-comet-tail {
   position: absolute;
   top: 50%;
@@ -305,9 +289,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-delay: inherit; /* Same as above */
   animation-play-state: running; /* Default state */
 }
-.animations-disabled .fn-comet-tail {
-  animation-play-state: paused !important; /* Explicitly pause tail if parent is paused */
-}
+/* .animations-disabled .fn-comet-tail removed */
 @keyframes fnCometArc {
   0% {
     transform: translate(var(--x-start), var(--y-start)) scale(0.5);
@@ -350,9 +332,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-play-state: running; /* Default state */
   z-index: 1;
 }
-.animations-disabled .fn-zero-point-butterfly {
-  animation-play-state: paused !important; /* Pause main butterfly movement and opacity */
-}
+/* .animations-disabled .fn-zero-point-butterfly removed */
 
 @keyframes fnButterflyDrift {
   0% {
@@ -407,9 +387,7 @@ watch(() => uiSettingsStore.animationsEnabled, (newValue) => {
   animation-delay: inherit; /* Inherits from .fn-zero-point-butterfly */
   animation-play-state: running; /* Default state for wings */
 }
-.animations-disabled .fn-butterfly-wing {
-  animation-play-state: paused !important; /* Pause wing flapping */
-}
+/* .animations-disabled .fn-butterfly-wing removed */
 .fn-butterfly-wing-left {
   left: 0;
   border-radius: 80% 20% 20% 80% / 50% 50% 50% 50%;

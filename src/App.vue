@@ -3,18 +3,15 @@
     <ImmersiveBackground :selected-game="activeThemeGame" />
     <MinecraftEffects
       v-if="activeThemeGame === 'minecraft'"
-      class="game-specific-effects-container"
-      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
+      class="game-specific-effects-container active-effect"
     />
     <FortniteEffects
       v-if="activeThemeGame === 'fortnite'"
-      class="game-specific-effects-container"
-      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
+      class="game-specific-effects-container active-effect"
     />
     <CODEffects
       v-if="activeThemeGame === 'cod'"
-      class="game-specific-effects-container"
-      :class="{ 'active-effect': uiSettingsStore.animationsEnabled }"
+      class="game-specific-effects-container active-effect"
     />
   </div>
   <div id="foreground-event-layer"></div>
@@ -23,7 +20,7 @@
     <nav>
       <!-- Empty div for spacing to help center the logo -->
       <div class="nav-spacer-left">
-        <AnimationToggle />
+        {/* AnimationToggle removed */}
       </div>
 
       <router-link to="/" class="nav-logo-link" @click="handleLogoClick">
@@ -73,10 +70,9 @@ import FortniteEffects from './components/BackgroundEffects/FortniteEffects.vue'
 import CODEffects from './components/BackgroundEffects/CODEffects.vue'
 import CartIcon from './components/CartIcon.vue'
 import MiniCart from './components/MiniCart.vue'
-import AnimationToggle from './components/AnimationToggle.vue' // Import the new component
-import { useUiSettingsStore } from '@/stores/uiSettings' // Import the UI settings store
+// AnimationToggle and useUiSettingsStore imports removed
 
-const uiSettingsStore = useUiSettingsStore() // Initialize the store
+// uiSettingsStore initialization removed
 const activeThemeGame = ref(localStorage.getItem('activeThemeGame') || '')
 const route = useRoute()
 const router = useRouter()
@@ -195,7 +191,7 @@ const closeMiniCart = () => {
 }
 
 const startFlyToCartAnimation = (startElement, itemLogo) => {
-  if (!uiSettingsStore.animationsEnabled) return; // Skip animation if disabled
+  // Condition for uiSettingsStore.animationsEnabled removed
   if (!startElement || !cartIconRef.value) return
 
   const startRect = startElement.getBoundingClientRect()
