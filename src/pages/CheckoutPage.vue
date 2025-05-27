@@ -82,8 +82,13 @@ const handleFormSubmit = () => {
   console.log(
     `Simulating order placement...\nEmail: ${customerDetails.value.email}\nTotal: $${cartStore.cartTotal.toFixed(2)}\nThank you for your purchase!`,
   )
+  // Store purchase data in localStorage
+  localStorage.setItem('purchaseEmail', customerDetails.value.email);
+  localStorage.setItem('purchaseItems', JSON.stringify(cartStore.items));
+  localStorage.setItem('purchaseTotal', cartStore.cartTotal.toFixed(2));
+
   cartStore.clearCart()
-  router.push('/')
+  router.push('/purchase-complete')
 }
 </script>
 
