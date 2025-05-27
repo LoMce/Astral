@@ -37,7 +37,14 @@
               v-model="customerDetails.email"
               required
               placeholder="your@email.com"
+              @blur="validateEmailOnBlur"
+              @input="clearEmailErrorOnInput"
+              :aria-invalid="!!emailError"
+              aria-describedby="email-error-message"
             />
+            <div v-if="emailError" id="email-error-message" class="error-message" role="alert">
+              {{ emailError }}
+            </div>
           </div>
 
           <h2>Payment Method</h2>
@@ -72,13 +79,65 @@ const router = useRouter()
 const customerDetails = ref({
   email: '',
 })
+/** @type {import('vue').Ref<String>} */
+const emailError = ref('');
 
+// --- Constants ---
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ERROR_MSG_EMAIL_REQUIRED = 'Email address is required.';
+const ERROR_MSG_EMAIL_INVALID = 'Please enter a valid email address.';
+
+/**
+ * Validates the customer's email address.
+ * Sets the `emailError` ref if validation fails.
+ * @returns {boolean} True if the email is valid, false otherwise.
+ */
+const validateEmail = () => {
+  if (!customerDetails.value.email) {
+    emailError.value = ERROR_MSG_EMAIL_REQUIRED;
+    return false;
+  }
+  if (!EMAIL_REGEX.test(customerDetails.value.email)) {
+    emailError.value = ERROR_MSG_EMAIL_INVALID;
+    return false;
+  }
+  emailError.value = '';
+  return true;
+}
+
+/**
+ * Validates the email when the input field loses focus.
+ */
+const validateEmailOnBlur = () => {
+  validateEmail();
+}
+
+/**
+ * Clears the email error message when the user starts typing in the email field.
+ */
+const clearEmailErrorOnInput = () => {
+  if (emailError.value) {
+    emailError.value = '';
+  }
+}
+
+/**
+ * Handles the checkout form submission.
+ * Validates the email, then simulates order placement if valid and cart is not empty.
+ * Clears the cart and navigates to the home page on successful "order".
+ */
 const handleFormSubmit = () => {
+  if (!validateEmail()) {
+    return; // Stop submission if email is invalid
+  }
+
   if (cartStore.items.length === 0) {
     console.warn('Your cart is empty. Please add items before placing an order.')
-    router.push('/')
+    // It might be better to show an in-page message rather than routing away immediately.
+    router.push('/') 
     return
   }
+  // Simulate order placement
   console.log(
     `Simulating order placement...\nEmail: ${customerDetails.value.email}\nTotal: $${cartStore.cartTotal.toFixed(2)}\nThank you for your purchase!`,
   )
@@ -252,7 +311,7 @@ const handleFormSubmit = () => {
   font-size: 0.95em;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-speed) ease;
+  transition: all var(--transition-speed) ease, transform 0.1s ease; /* Ensure transform is part of transition */
   border: 1px solid transparent;
 }
 .stripe-button {
@@ -264,6 +323,10 @@ const handleFormSubmit = () => {
   background-color: #5460c7;
   box-shadow: 0 0 8px rgba(103, 114, 229, 0.5);
 }
+.stripe-button:active {
+  transform: scale(0.98);
+  background-color: #505acc; /* Slightly darker/more intense */
+}
 .crypto-button {
   background-color: #f7931a;
   color: white;
@@ -273,10 +336,28 @@ const handleFormSubmit = () => {
   background-color: #e0800a;
   box-shadow: 0 0 8px rgba(247, 147, 26, 0.5);
 }
+.crypto-button:active {
+  transform: scale(0.98);
+  background-color: #d87e09; /* Slightly darker/more intense */
+}
 .styled-button.place-order-button {
   width: 100%;
   margin-top: 10px;
 }
+
+/* Specific focus styles for payment buttons */
+.stripe-button:focus-visible {
+  outline: none; /* Override global outline to use box-shadow for focus */
+  /* Inner white ring for separation, outer ring using a darker shade of the button's own color */
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #434f9c; /* Darker blue for Stripe */
+}
+
+.crypto-button:focus-visible {
+  outline: none; /* Override global outline */
+  /* Inner white ring, outer ring using a darker shade of the button's own color */
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #c47008; /* Darker orange for Crypto */
+}
+
 
 @media (max-width: 850px) {
   .checkout-content {
@@ -285,5 +366,12 @@ const handleFormSubmit = () => {
   .order-summary-and-cart {
     margin-bottom: 30px;
   }
+}
+
+.error-message {
+  color: #ff6b6b; /* A common error red color */
+  /* Or use a CSS variable if defined in your global styles: var(--error-color, #ff6b6b); */
+  font-size: 0.8em;
+  margin-top: 5px;
 }
 </style>

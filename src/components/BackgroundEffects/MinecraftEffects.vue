@@ -25,7 +25,9 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+// useUiSettingsStore and watch removed
 
+// uiSettingsStore removed
 const blocks = ref([])
 const dust = ref([])
 const enderParticles = ref([])
@@ -35,6 +37,13 @@ let creeperTimeout = null
 
 const createMinecraftEffects = () => {
   blocks.value = []
+  dust.value = []
+  enderParticles.value = []
+
+  // Removed check for uiSettingsStore.animationsEnabled
+  // if (creeperTimeout) clearTimeout(creeperTimeout) // This logic is now only in the watcher/onBeforeUnmount
+  // showCreeperFace.value = false
+
   const numBlocks = 4
   for (let i = 0; i < numBlocks; i++) {
     const size = Math.random() * 8 + 10 // vw
@@ -52,8 +61,7 @@ const createMinecraftEffects = () => {
     })
   }
 
-  dust.value = []
-  const numDust = 15
+  const numDust = 8 // Reduced from 15
   for (let i = 0; i < numDust; i++) {
     const startX = Math.random() * 100
     const startY = Math.random() * 100
@@ -71,8 +79,7 @@ const createMinecraftEffects = () => {
     })
   }
 
-  enderParticles.value = []
-  const numEnderParticles = 10
+  const numEnderParticles = 5 // Reduced from 10
   for (let i = 0; i < numEnderParticles; i++) {
     enderParticles.value.push({
       id: i,
@@ -88,6 +95,8 @@ const createMinecraftEffects = () => {
 
 const triggerCreeperFace = () => {
   if (creeperTimeout) clearTimeout(creeperTimeout)
+  // Removed check for uiSettingsStore.animationsEnabled
+  // showCreeperFace.value = false
 
   showCreeperFace.value = true
   const size = Math.random() * 50 + 80 // px
@@ -108,9 +117,12 @@ const triggerCreeperFace = () => {
 }
 
 onMounted(() => {
+  // Effects created and triggered unconditionally
   createMinecraftEffects()
   triggerCreeperFace()
 })
+
+// Watch for uiSettingsStore.animationsEnabled removed
 
 onBeforeUnmount(() => {
   if (creeperTimeout) clearTimeout(creeperTimeout)
@@ -136,7 +148,9 @@ onBeforeUnmount(() => {
   animation-timing-function: linear, forwards;
   animation-iteration-count: infinite, 1;
   animation-fill-mode: none, forwards;
+  animation-play-state: running;
 }
+/* .animations-disabled .mc-block-shadow removed */
 @keyframes mcDriftBlock {
   0% {
     transform: translate(var(--x-start), var(--y-start)) rotate(0deg);
@@ -168,7 +182,9 @@ onBeforeUnmount(() => {
   animation-timing-function: linear, ease-in-out;
   animation-iteration-count: infinite, infinite;
   animation-direction: normal, alternate;
+  animation-play-state: running;
 }
+/* .animations-disabled .mc-pixel-dust removed */
 @keyframes mcDustDrift {
   0% {
     transform: translate(var(--x-start), var(--y-start)) rotate(0deg);
@@ -203,7 +219,9 @@ onBeforeUnmount(() => {
   animation-name: mcEnderParticleFloat;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
+  animation-play-state: running;
 }
+/* .animations-disabled .mc-ender-particle removed */
 @keyframes mcEnderParticleFloat {
   0% {
     opacity: 0;
@@ -232,9 +250,11 @@ onBeforeUnmount(() => {
   animation-name: mcCreeperFade;
   animation-timing-function: ease-in-out;
   animation-fill-mode: forwards;
+  animation-play-state: running;
   filter: blur(1px);
   z-index: 1; /* Above other block shadows if needed */
 }
+/* .animations-disabled .mc-creeper-face-silhouette removed */
 @keyframes mcCreeperFade {
   0% {
     opacity: 0;

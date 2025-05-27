@@ -19,7 +19,9 @@
   <header class="app-header">
     <nav>
       <!-- Empty div for spacing to help center the logo -->
-      <div class="nav-spacer-left"></div>
+      <div class="nav-spacer-left">
+        {/* AnimationToggle removed */}
+      </div>
 
       <router-link to="/" class="nav-logo-link" @click="handleLogoClick">
         <img src="/favicon.ico" alt="Site Logo" class="nav-logo-img" />
@@ -54,54 +56,152 @@
   <MiniCart :is-open="isMiniCartOpen" @close="closeMiniCart" :active-theme="activeThemeGame" />
 
   <div v-if="flyingItem.visible" class="flying-item" :style="flyingItem.style">
+    <!-- TODO: Image Optimization: If flyingItem.logo refers to raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
     <img :src="flyingItem.logo" alt="flying item" />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, provide } from 'vue'
+import { ref, watch, onMounted, provide, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import ImmersiveBackground from './components/BackgroundEffects/ImmersiveBackground.vue'
-import MinecraftEffects from './components/BackgroundEffects/MinecraftEffects.vue'
-import FortniteEffects from './components/BackgroundEffects/FortniteEffects.vue'
-import CODEffects from './components/BackgroundEffects/CODEffects.vue'
 import CartIcon from './components/CartIcon.vue'
-import MiniCart from './components/MiniCart.vue'
 
-const activeThemeGame = ref(localStorage.getItem('activeThemeGame') || '')
+// --- Constants ---
+const LOCAL_STORAGE_THEME_KEY = 'activeThemeGame';
+const FLY_TO_CART_ANIMATION_DURATION = 600; // ms
+const FLYING_ITEM_SIZE_PX = 30; // width and height
+const FLYING_ITEM_SCALE_END = 0.3;
+const FLYING_ITEM_OPACITY_END = 0;
+const FLYING_ITEM_Z_INDEX = 2000;
+
+// --- Lazy Loaded Components ---
+const MinecraftEffects = defineAsyncComponent(() => 
+  import('./components/BackgroundEffects/MinecraftEffects.vue')
+);
+const FortniteEffects = defineAsyncComponent(() =>
+  import('./components/BackgroundEffects/FortniteEffects.vue')
+);
+const CODEffects = defineAsyncComponent(() =>
+  import('./components/BackgroundEffects/CODEffects.vue')
+);
+const MiniCart = defineAsyncComponent(() =>
+  import('./components/MiniCart.vue')
+);
+
+// --- Reactive State ---
+/** @type {import('vue').Ref<String>} The current active game theme value (e.g., 'minecraft'). */
+const activeThemeGame = ref(localStorage.getItem(LOCAL_STORAGE_THEME_KEY) || '')
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
+/** @type {import('vue').Ref<Boolean>} Controls the visibility of the MiniCart. */
 const isMiniCartOpen = ref(false)
+/** @type {import('vue').Ref<HTMLElement|null>} Template ref for the cart icon button. */
 const cartIconRef = ref(null)
 
+/** 
+ * List of game themes used for managing body classes.
+ * @type {Array<{value: String}>}
+ */
 const gamesListForTheme = [{ value: 'minecraft' }, { value: 'fortnite' }, { value: 'cod' }]
 
+/**
+ * Reactive state for the "fly to cart" animation item.
+ * @type {import('vue').Ref<{visible: Boolean, style: Object, logo: String}>}
+ */
 const flyingItem = ref({
   visible: false,
   style: {},
   logo: '',
 })
 
+// --- Functions ---
+/**
+ * Sets the active game theme, updates localStorage, and applies body classes.
+ * @param {String} gameValue - The value of the game theme to activate (e.g., 'minecraft'). Empty string to clear.
+ */
 const setActiveTheme = (gameValue) => {
   const newTheme = gameValue || ''
   if (activeThemeGame.value !== newTheme) {
     activeThemeGame.value = newTheme
     if (newTheme) {
-      localStorage.setItem('activeThemeGame', newTheme)
+      localStorage.setItem(LOCAL_STORAGE_THEME_KEY, newTheme)
     } else {
-      localStorage.removeItem('activeThemeGame')
+      localStorage.removeItem(LOCAL_STORAGE_THEME_KEY)
     }
   }
 }
 
+/**
+ * Handles click on the navigation logo. Clears the active theme if on the home page.
+ */
 const handleLogoClick = () => {
   if (route.path === '/') {
     setActiveTheme('')
   }
 }
 
+/**
+ * Toggles the visibility of the MiniCart.
+ */
+const toggleMiniCart = () => {
+  isMiniCartOpen.value = !isMiniCartOpen.value
+}
+
+/**
+ * Closes the MiniCart.
+ */
+const closeMiniCart = () => {
+  isMiniCartOpen.value = false
+}
+
+/**
+ * Initiates and manages the "fly to cart" animation.
+ * Provided to child components for triggering the animation.
+ * @param {HTMLElement} startElement - The DOM element from which the animation should start.
+ * @param {String} itemLogo - The source URL for the item's logo to be animated.
+ */
+const startFlyToCartAnimation = (startElement, itemLogo) => {
+  if (!startElement || !cartIconRef.value) return
+
+  const startRect = startElement.getBoundingClientRect()
+  const endRect = cartIconRef.value.getBoundingClientRect()
+  const itemSizeHalf = FLYING_ITEM_SIZE_PX / 2;
+
+  flyingItem.value.logo = itemLogo
+  flyingItem.value.style = {
+    position: 'fixed',
+    left: `${startRect.left + startRect.width / 2 - itemSizeHalf}px`,
+    top: `${startRect.top + startRect.height / 2 - itemSizeHalf}px`,
+    width: `${FLYING_ITEM_SIZE_PX}px`,
+    height: `${FLYING_ITEM_SIZE_PX}px`,
+    opacity: 1,
+    transform: 'scale(1)',
+    transition:
+      'left 0.5s cubic-bezier(0.29, 0.03, 0.43, 1.43), top 0.5s ease-out, opacity 0.4s 0.2s ease-out, transform 0.5s ease-out',
+    zIndex: FLYING_ITEM_Z_INDEX,
+  }
+  flyingItem.value.visible = true
+
+  requestAnimationFrame(() => {
+    flyingItem.value.style.left = `${endRect.left + endRect.width / 2 - itemSizeHalf}px`
+    flyingItem.value.style.top = `${endRect.top + endRect.height / 2 - itemSizeHalf}px`
+    flyingItem.value.style.opacity = FLYING_ITEM_OPACITY_END
+    flyingItem.value.style.transform = `scale(${FLYING_ITEM_SCALE_END})`
+  })
+
+  setTimeout(() => {
+    flyingItem.value.visible = false
+  }, FLY_TO_CART_ANIMATION_DURATION)
+}
+
+// --- Watchers ---
+/**
+ * Watches for changes in `activeThemeGame` to update document body classes
+ * for global theme styling.
+ */
 watch(
   activeThemeGame,
   (newGameValue, oldGameValue) => {
@@ -111,7 +211,6 @@ watch(
     document.body.classList.remove(`theme-${oldVal}`)
     gamesListForTheme.forEach((game) => {
       if (game.value !== newVal) {
-        // Ensure only the current new theme is not removed
         document.body.classList.remove(`theme-${game.value}`)
       }
     })
@@ -120,7 +219,6 @@ watch(
       document.body.classList.add(`theme-${newVal}`)
       document.body.classList.add('theme-active')
     } else {
-      // Ensure all theme classes are removed if newVal is empty
       gamesListForTheme.forEach((game) => {
         document.body.classList.remove(`theme-${game.value}`)
       })
@@ -130,86 +228,52 @@ watch(
   { immediate: true },
 )
 
+/**
+ * Watches for route changes to close the MiniCart.
+ * Also contains logic to potentially re-apply persisted theme if navigating
+ * between non-home pages (currently commented out).
+ */
 watch(route, (to) => {
   closeMiniCart()
-  // HomePage's onMounted will now handle theme neutralization when navigating to '/'
-  // So, we don't need to explicitly set it to neutral here anymore for that case.
-  // However, if navigating AWAY from home, and a theme was set, it should persist
-  // if localStorage has it, unless the new page sets its own theme.
-  // This logic remains tricky if pages don't manage their own themes.
-  // For now, keeping it simple: child pages are responsible for emitting their desired theme.
-  // If a page doesn't emit, the theme might revert to localStorage or stay as is.
   if (
     to.path !== '/' &&
-    localStorage.getItem('activeThemeGame') &&
-    activeThemeGame.value !== localStorage.getItem('activeThemeGame')
+    localStorage.getItem(LOCAL_STORAGE_THEME_KEY) &&
+    activeThemeGame.value !== localStorage.getItem(LOCAL_STORAGE_THEME_KEY)
   ) {
-    // This could be a scenario where we navigate from a themed page to another non-home page
-    // and want to ensure the persisted theme is re-applied if it got cleared somehow.
-    // setActiveTheme(localStorage.getItem('activeThemeGame'));
+    // setActiveTheme(localStorage.getItem(LOCAL_STORAGE_THEME_KEY)); // Potential re-application
   }
 })
 
+/**
+ * Watches for the MiniCart closing to return focus to the cart icon button.
+ */
+watch(isMiniCartOpen, (newVal, oldVal) => {
+  if (oldVal === true && newVal === false) {
+    if (cartIconRef.value) {
+      cartIconRef.value.focus()
+    }
+  }
+})
+
+// --- Lifecycle Hooks ---
 onMounted(() => {
-  // When App.vue mounts, establish the initial theme state.
-  // If the current path is home, HomePage.vue's onMounted will emit to neutralize.
-  // If not on home, and a theme is in localStorage, apply it.
-  // If no theme in localStorage and not on home, it defaults to neutral ('').
-  const storedTheme = localStorage.getItem('activeThemeGame')
+  const storedTheme = localStorage.getItem(LOCAL_STORAGE_THEME_KEY)
   if (route.path !== '/' && storedTheme) {
     setActiveTheme(storedTheme)
   } else if (route.path === '/') {
-    // Let HomePage handle neutralization via its onMounted emit
-    // but ensure App's state is consistent if it wasn't already neutral
     if (activeThemeGame.value !== '') {
-      // setActiveTheme(''); // This will be done by HomePage emit
+      // setActiveTheme(''); // Handled by HomePage.vue's onMounted emit
     }
   } else {
-    // Not on home, no stored theme
     setActiveTheme('')
   }
 })
 
-const toggleMiniCart = () => {
-  isMiniCartOpen.value = !isMiniCartOpen.value
-}
-const closeMiniCart = () => {
-  isMiniCartOpen.value = false
-}
-
-const startFlyToCartAnimation = (startElement, itemLogo) => {
-  if (!startElement || !cartIconRef.value) return
-
-  const startRect = startElement.getBoundingClientRect()
-  const endRect = cartIconRef.value.getBoundingClientRect()
-
-  flyingItem.value.logo = itemLogo
-  flyingItem.value.style = {
-    position: 'fixed',
-    left: `${startRect.left + startRect.width / 2 - 15}px`,
-    top: `${startRect.top + startRect.height / 2 - 15}px`,
-    width: '30px',
-    height: '30px',
-    opacity: 1,
-    transform: 'scale(1)',
-    transition:
-      'left 0.5s cubic-bezier(0.29, 0.03, 0.43, 1.43), top 0.5s ease-out, opacity 0.4s 0.2s ease-out, transform 0.5s ease-out',
-    zIndex: 2000,
-  }
-  flyingItem.value.visible = true
-
-  requestAnimationFrame(() => {
-    flyingItem.value.style.left = `${endRect.left + endRect.width / 2 - 15}px`
-    flyingItem.value.style.top = `${endRect.top + endRect.height / 2 - 15}px`
-    flyingItem.value.style.opacity = 0
-    flyingItem.value.style.transform = 'scale(0.3)'
-  })
-
-  setTimeout(() => {
-    flyingItem.value.visible = false
-  }, 600)
-}
-
+// --- Provide/Inject ---
+/**
+ * Provides the `startFlyToCartAnimation` function to descendant components.
+ * @see {@link startFlyToCartAnimation}
+ */
 provide('flyToCart', startFlyToCartAnimation)
 </script>
 
@@ -282,8 +346,9 @@ provide('flyToCart', startFlyToCartAnimation)
   text-decoration: none;
   display: flex;
   align-items: center;
-  transition: color var(--transition-speed) ease;
+  transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease;
   text-align: center;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.4); /* Added text shadow */
 }
 .nav-logo-link:hover {
   color: var(--glow-primary);
@@ -311,8 +376,8 @@ provide('flyToCart', startFlyToCartAnimation)
 .cart-button-wrapper {
   background: none;
   border: none;
-  padding: 0;
-  margin: 0;
+  padding: 8px; /* Increased padding for better touch target size */
+  margin: 0; /* Or adjust margin as needed if padding affects layout */
   cursor: pointer;
   color: var(--text-muted-color);
   transition: color var(--transition-speed) ease;
@@ -337,5 +402,17 @@ provide('flyToCart', startFlyToCartAnimation)
   height: 100%;
   object-fit: contain;
   display: block;
+}
+
+@media (max-width: 420px) {
+  .nav-logo-link {
+    font-size: 0.9em; /* Reduced from 1.1em for very narrow screens */
+  }
+  /* Optional: If cart icon needs adjustment, uncomment and modify below */
+  /*
+  .cart-button-wrapper {
+    padding: 0 5px; 
+  }
+  */
 }
 </style>

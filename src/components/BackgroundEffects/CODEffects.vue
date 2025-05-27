@@ -32,7 +32,9 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+// useUiSettingsStore and watch removed
 
+// uiSettingsStore removed
 const hazePatches = ref([])
 const showPredatorOverlay = ref(false)
 let predatorTimeout = null
@@ -40,6 +42,12 @@ const dogTags = ref([])
 
 const createCODEffects = () => {
   hazePatches.value = []
+  dogTags.value = []
+
+  // Removed check for uiSettingsStore.animationsEnabled
+  // if (predatorTimeout) clearTimeout(predatorTimeout) // This logic is now only in the watcher/onBeforeUnmount
+  // showPredatorOverlay.value = false 
+
   const numHaze = 2
   for (let i = 0; i < numHaze; i++) {
     hazePatches.value.push({
@@ -56,8 +64,7 @@ const createCODEffects = () => {
     })
   }
 
-  dogTags.value = []
-  const numDogTags = 5
+  const numDogTags = 3 // Reduced from 5
   for (let i = 0; i < numDogTags; i++) {
     dogTags.value.push({
       id: i,
@@ -72,6 +79,8 @@ const createCODEffects = () => {
 
 const triggerPredatorOverlay = () => {
   if (predatorTimeout) clearTimeout(predatorTimeout)
+  // Removed check for uiSettingsStore.animationsEnabled
+  // showPredatorOverlay.value = false
 
   showPredatorOverlay.value = true
   setTimeout(() => {
@@ -82,9 +91,12 @@ const triggerPredatorOverlay = () => {
 }
 
 onMounted(() => {
+  // Effects created and triggered unconditionally
   createCODEffects()
   triggerPredatorOverlay()
 })
+
+// Watch for uiSettingsStore.animationsEnabled removed
 
 onBeforeUnmount(() => {
   if (predatorTimeout) clearTimeout(predatorTimeout)
@@ -114,7 +126,9 @@ onBeforeUnmount(() => {
   animation-iteration-count: infinite, 1;
   animation-direction: alternate, normal;
   animation-fill-mode: none, forwards;
+  animation-play-state: running;
 }
+/* .animations-disabled .cod-haze-patch removed */
 @keyframes codHazeDrift {
   0% {
     transform: translate(var(--x-start), var(--y-start)) scale(0.8);
@@ -160,7 +174,9 @@ onBeforeUnmount(() => {
   background-size: 100% 8px;
   opacity: 0.3;
   animation: codScrollScanlines 10s linear infinite;
+  animation-play-state: running;
 }
+/* .animations-disabled .cod-scanline-glitch::before removed */
 @keyframes codScrollScanlines {
   0% {
     transform: translateY(0);
@@ -180,6 +196,7 @@ onBeforeUnmount(() => {
   background-color: rgba(var(--glow-primary-rgb), 0.02); /* Very faint color wash */
   opacity: 0;
   animation: codPredatorFade 1s ease-in-out forwards;
+  animation-play-state: running;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -250,7 +267,9 @@ onBeforeUnmount(() => {
   color: rgba(var(--glow-accent-rgb), 0.7);
   opacity: 0;
   animation: codPredatorTimerCount 1s linear forwards;
+  animation-play-state: running;
 }
+/* .animations-disabled .cod-predator-timer removed */
 @keyframes codPredatorTimerCount {
   0% {
     content: '0:05';
@@ -299,8 +318,10 @@ onBeforeUnmount(() => {
   animation-name: codDogTagFall;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+  animation-play-state: running;
   z-index: 1;
 }
+/* .animations-disabled .cod-dog-tag removed */
 .cod-dog-tag svg {
   width: 100%;
   height: 100%;
