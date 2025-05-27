@@ -10,8 +10,26 @@
       <h2>Order Summary</h2>
       <div v-if="items.length">
         <ul>
-          <li v-for="item in items" :key="item.id">
-            {{ item.name }} - Quantity: {{ item.quantity }} - Price: ${{ item.price ? item.price.toFixed(2) : 'N/A' }}
+          <li v-for="item in items" :key="item.id" class="purchase-item-card">
+            <div class="item-details">
+              <img v-if="item.logoSrc" :src="item.logoSrc" :alt="item.name || 'Game Logo'" class="item-logo">
+              <div class="item-info">
+                <h4 class="item-name">{{ item.name || 'Unknown Item' }}</h4>
+                <p class="item-meta">
+                  <span>Quantity: {{ item.quantity || 0 }}</span>
+                  <span class="item-price">Unit Price: ${{ item.price ? Number(item.price).toFixed(2) : 'N/A' }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div v-if="item.generatedKeys && item.generatedKeys.length > 0" class="keys-display-area">
+              <p class="keys-header">Your Key(s):</p>
+              <ul>
+                <li v-for="(key, index) in item.generatedKeys" :key="index" class="key-item">
+                  {{ key }}
+                </li>
+              </ul>
+            </div>
           </li>
         </ul>
         <p class="total-amount">Total: ${{ total }}</p>
@@ -61,61 +79,92 @@ function generateRandomKey() {
 onMounted(() => {
   email.value = localStorage.getItem('purchaseEmail') || '';
   const storedItemsString = localStorage.getItem('purchaseItems');
-  let parsedItems = []; // Initialize as empty array
+  let parsedItems = []; 
 
   if (storedItemsString) {
     try {
       parsedItems = JSON.parse(storedItemsString);
       if (!Array.isArray(parsedItems)) {
         console.error('Parsed items is not an array. Initializing to empty.', parsedItems);
-        parsedItems = []; // Ensure it's an array if parsing succeeded but was not an array
+        parsedItems = [];
       }
     } catch (e) {
       console.error('Error parsing purchaseItems from localStorage:', e);
-      // parsedItems remains [], so items.value will be empty by default later.
+      // parsedItems remains [], items.value will be empty.
     }
   }
+  // Logging Step 1: Original parsedItems
+  console.log('Original parsedItems:', JSON.parse(JSON.stringify(parsedItems)));
 
   if (parsedItems.length > 0) {
     try {
-      items.value = parsedItems.map(item => {
-        // Ensure item is a valid object before processing
-        if (typeof item !== 'object' || item === null) {
-          console.warn('Encountered invalid item in parsedItems:', item);
-          // Return a placeholder structure that won't break key generation or display
-          // It will be filtered out later if desired, or displayed as an error item.
+      let firstOriginalItemLogged = false;
+      let firstMappedItemLogged = false;
+      
+      const mappedItems = parsedItems.map(originalItem => {
+        if (!firstOriginalItemLogged && parsedItems.length > 0) {
+          // Logging Step 2: Processing originalItem (first item only)
+          console.log('Processing originalItem (first):', JSON.parse(JSON.stringify(originalItem)));
+          firstOriginalItemLogged = true;
+        }
+
+        if (typeof originalItem !== 'object' || originalItem === null) {
+          console.warn('Encountered invalid item in parsedItems:', JSON.parse(JSON.stringify(originalItem)));
           return { 
-            id: `invalid_item_${Date.now()}_${Math.random()}`, 
+            id: `invalid_item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, 
             name: 'Invalid Item Data', 
             quantity: 0, 
-            price: 0, 
+            price: 0,
+            logoSrc: '',
             generatedKeys: [] 
           };
         }
 
         const keys = [];
-        const quantity = Number(item.quantity) || 0;
+        const quantity = Number(originalItem.quantity) || 0;
         for (let i = 0; i < quantity; i++) {
           keys.push(generateRandomKey());
         }
         
-        const price = Number(item.price) || 0;
-        // Retain original properties, ensure price and quantity are numbers, add keys
-        return { ...item, price: price, quantity: quantity, generatedKeys: keys };
-      }).filter(item => item && item.name !== 'Invalid Item Data'); // Filter out placeholder invalid items
+        const mappedSingleItem = {
+          id: originalItem.id || `fallback_id_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          name: originalItem.name || 'Unknown Item',
+          price: Number(originalItem.price) || 0,
+          quantity: quantity,
+          logoSrc: originalItem.logoSrc || '',
+          gameName: originalItem.gameName || '', // Preserve if exists
+          passTitle: originalItem.passTitle || '', // Preserve if exists
+          generatedKeys: keys
+        };
+
+        if (!firstMappedItemLogged && parsedItems.length > 0) {
+            // Logging Step 3: Mapped item (first item only)
+            console.log('Mapped item (first, pre-filter):', JSON.parse(JSON.stringify(mappedSingleItem)));
+            firstMappedItemLogged = true;
+        }
+        return mappedSingleItem;
+      });
+      
+      items.value = mappedItems.filter(item => item && item.name !== 'Invalid Item Data');
       
       if (items.value.length === 0 && parsedItems.length > 0) {
-        // This case means all items were invalid
-        console.warn('All parsed items were invalid.');
+        console.warn('All parsed items were invalid or filtered out.');
+      }
+
+      // Logging Step 4: Final items.value (first item if available)
+      if (items.value.length > 0) {
+        console.log('Final items.value (first):', JSON.parse(JSON.stringify(items.value[0])));
+      } else {
+        console.log('Final items.value is empty after mapping and filtering.');
       }
 
     } catch (mapError) {
       console.error('Error processing (mapping) parsed items or generating keys:', mapError);
-      items.value = []; // If mapping fails, clear items to show "No items"
+      items.value = []; 
     }
   } else {
-    // If parsedItems is empty (either from bad JSON or empty localStorage)
     items.value = [];
+    console.log('No parsed items to process, items.value set to empty.');
   }
 
   total.value = localStorage.getItem('purchaseTotal') || '0.00';
@@ -236,36 +285,82 @@ onMounted(() => {
   margin: 0 0 1rem 0;
 }
 
-.order-summary-section li {
-  padding: 0.85rem 0.5rem; /* Increased padding */
-  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent); /* Softer border */
+/* Styles for individual purchased item cards */
+.purchase-item-card {
+  background-color: color-mix(in srgb, var(--card-bg-color) 95%, white 2%);
+  padding: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
   opacity: 0; /* Base style for animation */
   animation: itemAppear 0.5s ease-out forwards;
-  /* animation-fill-mode: backwards; */ /* Removed as per Step 2 suggestion, base opacity handles start state */
   transition: background-color var(--transition-speed-fast) ease;
-  border-radius: calc(var(--border-radius) / 2);
 }
-.order-summary-section li:hover {
+.purchase-item-card:hover {
   background-color: rgba(var(--glow-primary-rgb), 0.05);
 }
-
-/* Apply staggered delay - This is a simplified approach.
-   For true staggering on v-for, JS would be more robust.
-   This will make all items appear at the same time after a delay.
-   To make them appear one after another, each li would need a different delay.
-   This is hard to do with just CSS when items are dynamically generated.
-   We'll apply a base delay and they'll all come in together.
-*/
-.order-summary-section li:nth-child(1) { animation-delay: 1.2s; }
-.order-summary-section li:nth-child(2) { animation-delay: 1.3s; }
-.order-summary-section li:nth-child(3) { animation-delay: 1.4s; }
-/* Add more if typically more items are expected */
-.order-summary-section li:nth-child(n+4) { animation-delay: 1.5s; }
-
-
-.order-summary-section li:last-child {
+.purchase-item-card:last-child {
   border-bottom: none;
+  margin-bottom: 0; /* No margin for the last item if it's directly before total */
 }
+
+/* Staggered animation delays for item cards */
+.purchase-item-card:nth-child(1) { animation-delay: 1.2s; }
+.purchase-item-card:nth-child(2) { animation-delay: 1.3s; }
+.purchase-item-card:nth-child(3) { animation-delay: 1.4s; }
+.purchase-item-card:nth-child(n+4) { animation-delay: 1.5s; }
+
+
+.item-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem; /* Space before keys display area */
+}
+
+.item-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: calc(var(--border-radius) / 2);
+  background-color: rgba(0,0,0,0.1); /* Subtle bg for transparent logos */
+  border: 1px solid rgba(var(--glow-secondary-rgb), 0.1);
+  flex-shrink: 0; /* Prevent logo from shrinking */
+}
+
+.item-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--glow-primary);
+  margin: 0 0 0.35rem 0;
+  line-height: 1.3;
+}
+
+.item-meta {
+  font-size: 0.9em;
+  color: color-mix(in srgb, var(--text-color) 80%, transparent 20%);
+  line-height: 1.5;
+}
+.item-meta span {
+  display: inline-block; /* Or block if they should stack by default */
+  margin-right: 0.75rem;
+}
+.item-meta span:last-child {
+  margin-right: 0;
+}
+
+.item-price { /* This is a span within .item-meta */
+  font-weight: 500; /* Slightly bolder than regular meta text */
+  color: var(--text-color); /* Brighter than muted meta text */
+}
+
 
 @keyframes itemAppear {
   from {
@@ -481,8 +576,21 @@ onMounted(() => {
   .order-summary-section h2 {
     font-size: 1.3em;
   }
-   .order-summary-section li {
-    padding: 0.75rem 0.25rem; 
+   .purchase-item-card { /* Was .order-summary-section li */
+    padding: 0.75rem; 
+  }
+  .item-details {
+    gap: 0.75rem;
+  }
+  .item-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .item-name {
+    font-size: 1em;
+  }
+  .item-meta {
+    font-size: 0.85em;
   }
   .total-amount {
     font-size: 1.2em;
@@ -534,8 +642,32 @@ onMounted(() => {
     margin-bottom: 1rem;
   }
   .order-summary-section, .incentive-banner, .actions-section {
-    padding: 1rem;
+    padding: 1rem; /* Keep some padding for sections */
     margin-bottom: 1.5rem;
+  }
+  .purchase-item-card {
+    padding: 0.5rem; /* Reduce padding on cards for very small screens */
+  }
+  .item-details {
+    flex-direction: column; /* Stack logo and info */
+    align-items: flex-start; /* Align to start when stacked */
+    gap: 0.5rem; /* Reduce gap when stacked */
+  }
+  .item-logo {
+    width: 35px; /* Smaller logo */
+    height: 35px;
+    margin-bottom: 0.5rem; /* Space below logo when stacked */
+  }
+  .item-name {
+    font-size: 0.95em;
+  }
+  .item-meta span {
+    display: block; /* Stack quantity and price */
+    margin-right: 0;
+    margin-bottom: 0.2rem;
+  }
+  .item-meta span:last-child {
+    margin-bottom: 0;
   }
   .order-summary-section h2 {
     font-size: 1.2em;

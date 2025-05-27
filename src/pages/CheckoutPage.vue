@@ -195,12 +195,12 @@ const handleFormSubmit = () => {
 
       generatedDemoItems.push({
         id: `${game.value}_${pass.type}_demo_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`,
-        gameName: game.name, // Retaining for potential future use if PurchaseCompletePage is updated
-        passTitle: pass.title, // Retaining for potential future use
-        quantity: quantity,
-        price: price, // Store as number
         name: `${game.name} - ${pass.title}`, // Combined name for PurchaseCompletePage
-        // logoSrc: game.logoSrc, // Could pass this if PurchaseCompletePage can display it
+        price: price, // Numeric price
+        quantity: quantity,
+        logoSrc: game.logoSrc, // Ensure logoSrc is included
+        gameName: game.name, 
+        passTitle: pass.title, 
       });
     }
     
@@ -218,13 +218,31 @@ const handleFormSubmit = () => {
     );
     // Do not clear cartStore as it was already empty or not used for this fake transaction
   } else {
-    // Cart is not empty, use actual cart data
+    // Cart is not empty, use actual cart data, map to desired structure for localStorage
     console.log(
       `Simulating order placement with ACTUAL cart data...\nEmail: ${customerDetails.value.email}\nTotal: $${cartStore.cartTotal.toFixed(2)}\nThank you for your purchase!`,
     );
+    
+    const itemsForStorage = cartStore.items.map(cartItem => {
+      // Construct the 'name' field similar to how PurchaseCompletePage expects it if not already present
+      // cart.js stores name as gameName + passTitle, so cartItem.name might not exist or be different.
+      // The cart store items already have: gameName, passTitle.
+      // The combined name is: `${cartItem.gameName} - ${cartItem.passTitle}`
+      return {
+        id: cartItem.id,
+        name: `${cartItem.gameName} - ${cartItem.passTitle}`, // Ensure consistent name format
+        price: cartItem.priceNumeric || 0, // Ensure price is numeric
+        quantity: cartItem.quantity,
+        logoSrc: cartItem.gameLogo || '', // Map gameLogo to logoSrc, provide fallback
+        // Preserve gameName and passTitle if PurchaseCompletePage uses them separately
+        gameName: cartItem.gameName,
+        passTitle: cartItem.passTitle,
+      };
+    });
+
     localStorage.setItem('purchaseEmail', customerDetails.value.email);
-    localStorage.setItem('purchaseItems', JSON.stringify(cartStore.items));
-    localStorage.setItem('purchaseTotal', cartStore.cartTotal.toFixed(2));
+    localStorage.setItem('purchaseItems', JSON.stringify(itemsForStorage));
+    localStorage.setItem('purchaseTotal', cartStore.cartTotal.toFixed(2)); // cartTotal is already numeric
     cartStore.clearCart(); // Clear the actual cart items
   }
 
