@@ -19,9 +19,7 @@
   <header class="app-header">
     <nav>
       <!-- Empty div for spacing to help center the logo -->
-      <div class="nav-spacer-left">
-        {/* AnimationToggle removed */}
-      </div>
+      <div class="nav-spacer-left"></div>
 
       <router-link to="/" class="nav-logo-link" @click="handleLogoClick">
         <img src="/favicon.ico" alt="Site Logo" class="nav-logo-img" />
@@ -55,9 +53,15 @@
 
   <MiniCart :is-open="isMiniCartOpen" @close="closeMiniCart" :active-theme="activeThemeGame" />
 
-  <div v-if="flyingItem.visible" class="flying-item" :style="flyingItem.style">
-    <!-- TODO: Image Optimization: If flyingItem.logo refers to raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
-    <img :src="flyingItem.logo" alt="flying item" />
+  <div
+    v-for="item in flyingItems"
+    :key="item.id"
+    v-show="item.visible"
+    class="flying-item"
+    :style="item.style"
+  >
+    <!-- TODO: Image Optimization: If item.logo refers to raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
+    <img :src="item.logo" alt="flying item" />
   </div>
 </template>
 
@@ -108,14 +112,10 @@ const cartIconRef = ref(null)
 const gamesListForTheme = [{ value: 'minecraft' }, { value: 'fortnite' }, { value: 'cod' }]
 
 /**
- * Reactive state for the "fly to cart" animation item.
- * @type {import('vue').Ref<{visible: Boolean, style: Object, logo: String}>}
+ * Reactive state for the "fly to cart" animation items.
+ * @type {import('vue').Ref<Array<{id: Number | String, visible: Boolean, style: Object, logo: String}>>}
  */
-const flyingItem = ref({
-  visible: false,
-  style: {},
-  logo: '',
-})
+const flyingItems = ref([])
 
 // --- Functions ---
 /**
@@ -158,44 +158,56 @@ const closeMiniCart = () => {
 }
 
 /**
- * Initiates and manages the "fly to cart" animation.
+ * Initiates and manages the "fly to cart" animation for multiple items.
  * Provided to child components for triggering the animation.
  * @param {HTMLElement} startElement - The DOM element from which the animation should start.
  * @param {String} itemLogo - The source URL for the item's logo to be animated.
  */
 const startFlyToCartAnimation = (startElement, itemLogo) => {
-  if (!startElement || !cartIconRef.value) return
+  if (!startElement || !cartIconRef.value) return;
 
-  const startRect = startElement.getBoundingClientRect()
-  const endRect = cartIconRef.value.getBoundingClientRect()
+  const itemId = Date.now() + Math.random(); // Simple unique ID
+
+  const startRect = startElement.getBoundingClientRect();
+  const endRect = cartIconRef.value.getBoundingClientRect();
   const itemSizeHalf = FLYING_ITEM_SIZE_PX / 2;
 
-  flyingItem.value.logo = itemLogo
-  flyingItem.value.style = {
-    position: 'fixed',
-    left: `${startRect.left + startRect.width / 2 - itemSizeHalf}px`,
-    top: `${startRect.top + startRect.height / 2 - itemSizeHalf}px`,
-    width: `${FLYING_ITEM_SIZE_PX}px`,
-    height: `${FLYING_ITEM_SIZE_PX}px`,
-    opacity: 1,
-    transform: 'scale(1)',
-    transition:
-      'left 0.5s cubic-bezier(0.29, 0.03, 0.43, 1.43), top 0.5s ease-out, opacity 0.4s 0.2s ease-out, transform 0.5s ease-out',
-    zIndex: FLYING_ITEM_Z_INDEX,
-  }
-  flyingItem.value.visible = true
+  const newItem = {
+    id: itemId,
+    logo: itemLogo,
+    visible: true,
+    style: {
+      position: 'fixed',
+      left: `${startRect.left + startRect.width / 2 - itemSizeHalf}px`,
+      top: `${startRect.top + startRect.height / 2 - itemSizeHalf}px`,
+      width: `${FLYING_ITEM_SIZE_PX}px`,
+      height: `${FLYING_ITEM_SIZE_PX}px`,
+      opacity: 1,
+      transform: 'scale(1)',
+      transition: 'left 0.5s cubic-bezier(0.29, 0.03, 0.43, 1.43), top 0.5s ease-out, opacity 0.4s 0.2s ease-out, transform 0.5s ease-out',
+      zIndex: FLYING_ITEM_Z_INDEX,
+    }
+  };
 
+  flyingItems.value.push(newItem);
+
+  // Update style for animation destination shortly after adding
   requestAnimationFrame(() => {
-    flyingItem.value.style.left = `${endRect.left + endRect.width / 2 - itemSizeHalf}px`
-    flyingItem.value.style.top = `${endRect.top + endRect.height / 2 - itemSizeHalf}px`
-    flyingItem.value.style.opacity = FLYING_ITEM_OPACITY_END
-    flyingItem.value.style.transform = `scale(${FLYING_ITEM_SCALE_END})`
-  })
+    const itemToAnimate = flyingItems.value.find(i => i.id === itemId);
+    if (itemToAnimate) {
+      // Trigger reflow/repaint before applying transition styles if needed, though Vue's nextTick or direct style assignment usually handles this.
+      // Forcing reflow can be done by accessing offsetHeight, but often not necessary.
+      itemToAnimate.style.left = `${endRect.left + endRect.width / 2 - itemSizeHalf}px`;
+      itemToAnimate.style.top = `${endRect.top + endRect.height / 2 - itemSizeHalf}px`;
+      itemToAnimate.style.opacity = FLYING_ITEM_OPACITY_END;
+      itemToAnimate.style.transform = `scale(${FLYING_ITEM_SCALE_END})`;
+    }
+  });
 
   setTimeout(() => {
-    flyingItem.value.visible = false
-  }, FLY_TO_CART_ANIMATION_DURATION)
-}
+    flyingItems.value = flyingItems.value.filter(i => i.id !== itemId);
+  }, FLY_TO_CART_ANIMATION_DURATION);
+};
 
 // --- Watchers ---
 /**
