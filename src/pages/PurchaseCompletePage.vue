@@ -1,7 +1,7 @@
 <template>
   <div class="purchase-complete-page">
     <h1>Purchase Successful!</h1>
-    <div v_if="email">
+    <div v-if="email">
       <p>Thank you for your purchase, {{ email }}!</p>
       <h2>Order Summary:</h2>
       <ul v-if="items.length">
