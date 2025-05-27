@@ -46,14 +46,39 @@ const email = ref('');
 const items = ref([]);
 const total = ref('0.00');
 
+function generateRandomKey() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let key = '';
+  for (let i = 0; i < 4; i++) { // 4 segments
+    for (let j = 0; j < 4; j++) { // 4 chars per segment
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    if (i < 3) key += '-'; // Add hyphen between segments
+  }
+  return key;
+}
+
 onMounted(() => {
   email.value = localStorage.getItem('purchaseEmail') || '';
   const storedItems = localStorage.getItem('purchaseItems');
   if (storedItems) {
     try {
-      items.value = JSON.parse(storedItems);
+      let parsedItems = JSON.parse(storedItems);
+      if (Array.isArray(parsedItems)) {
+        items.value = parsedItems.map(item => {
+          const keys = [];
+          // Ensure quantity is a number, default to 1 if not present or invalid
+          const quantity = Number(item.quantity) || 0; 
+          for (let i = 0; i < quantity; i++) {
+            keys.push(generateRandomKey());
+          }
+          return { ...item, generatedKeys: keys };
+        });
+      } else {
+        items.value = []; // Should be an array
+      }
     } catch (e) {
-      console.error('Error parsing purchase items:', e);
+      console.error('Error parsing purchase items or generating keys:', e);
       items.value = [];
     }
   }
@@ -445,6 +470,16 @@ onMounted(() => {
   .actions-section {
     padding: 0 10px; /* Add some padding to actions section if buttons are full width */
   }
+
+  /* Key display responsive adjustments */
+  .keys-header {
+    font-size: 0.85em;
+  }
+  .key-item {
+    font-size: 0.9em;
+    padding: 0.4rem 0.6rem;
+    letter-spacing: 0.5px;
+  }
 }
 
 @media (max-width: 400px) { /* Small Mobile */
@@ -481,5 +516,69 @@ onMounted(() => {
   .incentive-banner p, .discount-instruction {
     font-size: 0.8em;
   }
+
+  /* Key display responsive adjustments */
+  .keys-display-area {
+    padding: 0.5rem;
+  }
+  .keys-header {
+    font-size: 0.8em;
+  }
+  .key-item {
+    font-size: 0.8em; /* Adjusted for very small screens */
+    padding: 0.3rem 0.5rem;
+    letter-spacing: 0.25px;
+  }
+}
+
+/* --- Styles for Generated Keys --- */
+.keys-display-area {
+  margin-top: 1rem;
+  background-color: rgba(var(--glow-primary-rgb), 0.04);
+  border-top: 1px solid rgba(var(--glow-primary-rgb), 0.15);
+  padding: 0.75rem;
+  border-radius: calc(var(--border-radius) / 1.5);
+}
+
+.keys-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-color) 85%, white 15%);
+  margin-bottom: 0.6rem;
+}
+
+.keys-display-area ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.key-item {
+  font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+  background-color: rgba(var(--card-bg-color), 0.6);
+  border: 1px solid rgba(var(--glow-secondary-rgb), 0.3);
+  color: var(--glow-accent);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: calc(var(--border-radius) / 2.5);
+  letter-spacing: 0.75px;
+  font-size: 0.95em;
+  transition: background-color var(--transition-speed-fast) ease,
+              border-color var(--transition-speed-fast) ease,
+              transform var(--transition-speed-fast) ease;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  cursor: default; /* Or 'text' if preferred for selection */
+}
+
+.key-item:hover {
+  background-color: rgba(var(--glow-accent-rgb), 0.15);
+  border-color: var(--glow-accent);
+  transform: scale(1.01);
+}
+
+.keys-display-area ul .key-item:last-child {
+  margin-bottom: 0;
 }
 </style>

@@ -76,6 +76,42 @@ import CartItem from '@/components/CartItem.vue'
 const cartStore = useCartStore()
 const router = useRouter()
 
+// --- Demo Data for Empty Cart Scenario ---
+const demoGamesData = [
+  {
+    name: 'Minecraft',
+    value: 'minecraft',
+    logoSrc:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNzgwODY4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjAiIHJ5PSIwIiBmaWxsPSIjM2M0YjMyIi8+PHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjgiIGhlaWdodD0iOCIgcng9IjAiIHJ5PSIwIiBmaWxsPSIjYTg4NjAiLz48cmVjdCB4PSI4IiB5PSI0IiB3aWR0aD0iOCIgaGVpZ2h0PSI0IiByeD0iMCIgcnk9IjAiIGZpbGw9IiM3MDYwNDAiLz48cmVjdCB4PSI0IiB5PSI4IiB3aWR0aD0iNCIgaGVpZ2h0PSI4IiByeD0iMCIgcnk9IjAiIGZpbGw9IiM3MDYwNDAiLz48L3N2Zz4=',
+  },
+  {
+    name: 'Fortnite',
+    value: 'fortnite',
+    logoSrc:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjOTA4MGE4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTNzcuNTIgMiAxMiAyek04LjUgMTVjLTEuMzggMC0yLjUtMS4xMi0yLjUtMi41UzcuMTIgMTAgOC41IDEwczEuNjcuMiAyLjI1LjVsMS4yNS0zLjc1QzExLjE3IDkuNSA5LjgzIDkgOC41IDljLTIuNDggMC00LjUgMi00LjUgNC41UzYuMDIgMTggOC41IDE4czIuODMtLjUgMy41My0xLjI1bC0xLjI1LTEuNzVjLS41OC4zLTEuMzcuNS0yLjI4LjV6bTcgMGMtMS4zOCAwLTIuNS0xLjEyLTIuNS0yLjVzMS4xMi0yLjUgMi41LTIuNWMxLjMzIDAgMi42Ny41IDMuNSAxLjI1bC0xLjI1IDEuNzVjLS41OC0uMy0xLjM3LS41LTIuMjUtLjVzLTEuNjguMi0yLjI1LjVsMS4yNSAzLjc1Yy44My0uNyAxLjE3LTEuMjUgMy41My0xLjI1IDIuNDggMCA0LjUgMiA0LjUgNC41UzE3LjkSDE4IDE1LjUgMThzLTIuODMtLjUgMy41My0xLjI1bDEuMjUtMS43NWMuNTguMyAxLjM3LjUgMi4yOC41eiIgZmlsbD0iI2ZmNDBmZiIvPjwvc3ZnPg==',
+  },
+  {
+    name: 'Call of Duty',
+    value: 'cod',
+    logoSrc:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNjg3MDY4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTNzcuNTIgMiAxMiAyek0xMiA0Yy0xLjEgMC0yIC45LTIgMnY5aDEuNVYxMS41aDF2NC41aDEuNVY2aC0xVjQuNWgtMVYzYy0xLjV2MXptLTQuNSA1aDEuNVYxNmgtMS41Vjl6bTkgMGgxLjVWMTZIMTYuNVY5eiIgZmlsbD0iI2NjNzcwMCIvPjwvc3ZnPg==',
+  }
+];
+
+const demoKeyCardsData = [
+  { type: 'Daily', title: 'Daily Pass', price: '$1.99', features: ['Instant Access', 'Core Features'] },
+  { type: 'Monthly', title: 'Monthly Pass', price: '$19.99', features: ['Full Access', 'Unlock Everything'] },
+  { type: 'Weekly', title: 'Weekly Pass', price: '$7.99', features: ['7-Day Access', 'All Features'] }
+];
+
+// Helper functions for random selection
+function getRandomElement(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 const customerDetails = ref({
   email: '',
 })
@@ -132,26 +168,53 @@ const handleFormSubmit = () => {
   }
 
   if (cartStore.items.length === 0) {
-    // Cart is empty, populate with fake data for demonstration
-    console.log('Cart is empty. Populating localStorage with fake data for purchase completion page.');
-    const fakeEmail = customerDetails.value.email || 'gamerX91@example.com';
-    const fakeItems = [
-      { id: 'cg_dx_01', name: 'Chrono Guardian - Deluxe Edition', quantity: 1, price: 59.99 },
-      { id: 'am_sp_02', name: 'Astro Miner - Starter Pack', quantity: 2, price: 19.99 },
-      { id: 'nr_ul_03', name: 'Neon Racer Ultimate', quantity: 1, price: 39.99 }
-    ];
+    // Cart is empty, populate with dynamic demo data
+    console.log('Cart is empty. Populating localStorage with dynamic demo data for purchase completion page.');
+    const userEmail = customerDetails.value.email || 'demouser@example.com';
+    
+    const generatedDemoItems = [];
+    const numberOfItemsToGenerate = getRandomInt(1, 3);
+    const usedCombinations = new Set(); // To avoid duplicate game+pass items
+
+    for (let i = 0; i < numberOfItemsToGenerate; i++) {
+      let game, pass, combinationKey;
+      let attempts = 0; // Safety break for loop
+      do {
+        game = getRandomElement(demoGamesData);
+        pass = getRandomElement(demoKeyCardsData);
+        combinationKey = `${game.value}_${pass.type}`;
+        attempts++;
+      } while (usedCombinations.has(combinationKey) && attempts < (demoGamesData.length * demoKeyCardsData.length));
+      
+      if (usedCombinations.has(combinationKey)) continue; // Skip if still duplicate after attempts (e.g. all combos used)
+
+      usedCombinations.add(combinationKey);
+
+      const quantity = getRandomInt(1, 2);
+      const price = parseFloat(pass.price.replace('$', ''));
+
+      generatedDemoItems.push({
+        id: `${game.value}_${pass.type}_demo_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`,
+        gameName: game.name, // Retaining for potential future use if PurchaseCompletePage is updated
+        passTitle: pass.title, // Retaining for potential future use
+        quantity: quantity,
+        price: price, // Store as number
+        name: `${game.name} - ${pass.title}`, // Combined name for PurchaseCompletePage
+        // logoSrc: game.logoSrc, // Could pass this if PurchaseCompletePage can display it
+      });
+    }
+    
     let calculatedTotal = 0;
-    fakeItems.forEach(item => {
+    generatedDemoItems.forEach(item => {
       calculatedTotal += item.quantity * item.price;
     });
 
-    localStorage.setItem('purchaseEmail', fakeEmail);
-    localStorage.setItem('purchaseItems', JSON.stringify(fakeItems));
+    localStorage.setItem('purchaseEmail', userEmail);
+    localStorage.setItem('purchaseItems', JSON.stringify(generatedDemoItems));
     localStorage.setItem('purchaseTotal', calculatedTotal.toFixed(2));
     
-    // Log what would be "placed"
     console.log(
-      `Simulating order placement with FAKE data...\nEmail: ${fakeEmail}\nTotal: $${calculatedTotal.toFixed(2)}\nItems: ${JSON.stringify(fakeItems, null, 2)}\nThank you for your purchase!`,
+      `Simulating order placement with DYNAMIC DEMO data...\nEmail: ${userEmail}\nTotal: $${calculatedTotal.toFixed(2)}\nItems: ${JSON.stringify(generatedDemoItems, null, 2)}\nThank you for your purchase!`,
     );
     // Do not clear cartStore as it was already empty or not used for this fake transaction
   } else {
