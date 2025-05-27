@@ -51,7 +51,7 @@ const createFortniteEffects = () => {
 
   // Removed check for uiSettingsStore.animationsEnabled
 
-  const numWisps = 6
+  const numWisps = 3 // Reduced from 6
   for (let i = 0; i < numWisps; i++) {
     wisps.value.push({
       id: i,
@@ -68,7 +68,7 @@ const createFortniteEffects = () => {
     })
   }
 
-  const numOrbs = 8
+  const numOrbs = 4 // Reduced from 8
   const orbSizeMin = 4,
     orbSizeMax = 10
   const insetMarginVw = 15

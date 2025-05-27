@@ -26,6 +26,7 @@
             class="mini-cart-item"
             :class="`theme-item-${item.gameValue}`"
           >
+            <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
             <img :src="item.gameLogo" :alt="item.gameName" class="mini-cart-item-logo" />
             <div class="mini-cart-item-details">
               <div class="item-info-main">
@@ -79,31 +80,57 @@
 <script setup>
 import { computed, defineProps, defineEmits, watch, nextTick, ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
-import { RouterLink } from 'vue-router' // Explicitly import RouterLink if needed, though usually auto-imported in Vue 3 projects
+import { RouterLink } from 'vue-router' 
+
+// --- Constants ---
+/**
+ * CSS selector for finding focusable elements within the MiniCart.
+ * @type {String}
+ */
+const FOCUSABLE_ELEMENTS_SELECTOR = 
+  'a[href]:not([disabled]), button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 
 const props = defineProps({
+  /** Controls the visibility of the MiniCart. */
   isOpen: Boolean,
-  activeTheme: String, // Pass current page theme for modal backdrop consistency
+  /** The active theme string (e.g., 'minecraft') to apply consistent styling. */
+  activeTheme: String, 
 })
+
+/**
+ * Emitted when the MiniCart requests to be closed.
+ * @event close
+ */
 const emit = defineEmits(['close'])
 
 const cartStore = useCartStore()
 const miniCartContainerRef = ref(null)
 
+/**
+ * Computes the theme class string for the MiniCart container.
+ * @returns {String} The theme class, e.g., "theme-minecraft", or empty if no active theme.
+ */
 const themeClass = computed(() => {
-  // Apply the page's active theme to the minicart itself for consistent styling
   return props.activeTheme ? `theme-${props.activeTheme}` : ''
 })
 
+/**
+ * Retrieves all visible, focusable elements within a given container.
+ * @param {HTMLElement} container - The parent element to search within.
+ * @returns {Array<HTMLElement>} An array of focusable HTML elements.
+ */
 function getFocusableElements(container) {
   if (!container) return []
   return Array.from(
-    container.querySelectorAll(
-      'a[href]:not([disabled]), button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
+    container.querySelectorAll(FOCUSABLE_ELEMENTS_SELECTOR)
   ).filter(el => el.offsetWidth > 0 && el.offsetHeight > 0) // Filter out hidden elements
 }
 
+/**
+ * Sets focus to the first focusable element within the MiniCart container.
+ * Typically called when the MiniCart is opened.
+ */
 function focusFirstElement() {
   if (miniCartContainerRef.value) {
     const focusable = getFocusableElements(miniCartContainerRef.value)
@@ -113,6 +140,10 @@ function focusFirstElement() {
   }
 }
 
+/**
+ * Watches the `isOpen` prop. When the MiniCart opens, it waits for the next DOM tick
+ * and then calls `focusFirstElement` to manage focus.
+ */
 watch(
   () => props.isOpen,
   (newIsOpen) => {
@@ -124,6 +155,10 @@ watch(
   }
 )
 
+/**
+ * Handles keyboard events within the MiniCart, primarily for focus trapping (Tab key).
+ * @param {KeyboardEvent} event - The keyboard event object.
+ */
 const handleKeyDown = (event) => {
   if (event.key === 'Tab' && miniCartContainerRef.value) {
     const focusableElements = getFocusableElements(miniCartContainerRef.value)
@@ -319,7 +354,7 @@ const handleKeyDown = (event) => {
   border: none;
   color: var(--text-muted-color);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px; /* Increased padding for better touch target size */
   opacity: 0.7;
   margin-left: 5px; /* Space from details */
 }

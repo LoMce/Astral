@@ -61,7 +61,7 @@ const createMinecraftEffects = () => {
     })
   }
 
-  const numDust = 15
+  const numDust = 8 // Reduced from 15
   for (let i = 0; i < numDust; i++) {
     const startX = Math.random() * 100
     const startY = Math.random() * 100
@@ -79,7 +79,7 @@ const createMinecraftEffects = () => {
     })
   }
 
-  const numEnderParticles = 10
+  const numEnderParticles = 5 // Reduced from 10
   for (let i = 0; i < numEnderParticles; i++) {
     enderParticles.value.push({
       id: i,

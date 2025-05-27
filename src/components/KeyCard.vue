@@ -21,24 +21,56 @@
       <span v-else>{{ buyButtonText }}</span>
     </button>
     <div v-if="showParticles" class="particle-burst" :style="particleBurstPosition">
-      <div v-for="p in 10" :key="p" class="particle" :style="particleStyle()"></div>
+      <div v-for="p in NUM_PARTICLES_IN_BURST" :key="p" class="particle" :style="particleStyle()"></div>
+    </div>
+    <div class="visually-hidden" aria-live="polite" aria-atomic="true">
+      {{ statusMessage }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, defineProps, defineEmits, watch } from 'vue' // Added watch
+import { ref, nextTick, defineProps, defineEmits, watch } from 'vue' 
+
+// --- Configuration Constants ---
+const JUST_ADDED_TIMEOUT = 1500; // ms for "Added ✔" button state
+const PARTICLE_BURST_DURATION = 600; // ms for particle visibility
+const NUM_PARTICLES_IN_BURST = 10;
+
+// Particle style generation constants
+const PARTICLE_RANDOM_MAX_ANGLE = 360;
+const PARTICLE_RANDOM_BASE_DISTANCE = 30; // px
+const PARTICLE_RANDOM_MAX_ADD_DISTANCE = 40; // px
+const PARTICLE_RANDOM_BASE_DURATION = 0.4; // seconds
+const PARTICLE_RANDOM_MAX_ADD_DURATION = 0.3; // seconds
+const PARTICLE_HSL_SATURATION = '80%';
+const PARTICLE_HSL_LIGHTNESS = '65%';
+// Optional: const ALREADY_EXISTS_TIMEOUT = 3000; // If enabling timeout for "In Cart" state
 
 const props = defineProps({
+  /** The main title of the key card (e.g., pass type). */
   title: String,
+  /** The price string to display (e.g., "$9.99"). */
   price: String,
+  /** Array of feature strings to list. */
   features: Array,
+  /** Boolean indicating if this card should have "best value" styling. */
   isBestValue: Boolean,
+  /** Initial text for the buy button (e.g., "Buy Now"). */
   buyButtonText: String,
+  /** Optional game-specific feature string. */
   gameSpecificFeature: String,
+  /** Path to the game logo (used by watch to reset state on context change). */
   gameLogo: String,
 })
 
+/**
+ * Emitted when the purchase button is clicked.
+ * @event purchase
+ * @type {Function}
+ * @param {Function} callback - A callback function that the parent should invoke with the purchase status ('added', 'already_in_cart', or other).
+ * @param {HTMLElement} buttonRef - A reference to the buy button DOM element, useful for animations.
+ */
 const emit = defineEmits(['purchase'])
 
 const isAdding = ref(false)
@@ -47,56 +79,97 @@ const alreadyExists = ref(false)
 const showParticles = ref(false)
 const buyButtonRef = ref(null)
 const particleBurstPosition = ref({})
+/**
+ * Holds the message for the ARIA live region, announcing button state changes.
+ * @type {import('vue').Ref<String>}
+ */
+const statusMessage = ref('') 
 
 // Watch for changes in game-specific props to reset button state
-// gameSpecificFeature is a good proxy for the game context changing for this card.
 watch(
-  () => props.gameSpecificFeature,
+  () => props.gameSpecificFeature, // Also implicitly watches gameLogo if it causes this to change
+  /**
+   * Resets the button's visual and ARIA states when the card's context changes
+   * (indicated by `gameSpecificFeature` or `gameLogo` prop changing).
+   */
   () => {
     isAdding.value = false
     justAdded.value = false
     alreadyExists.value = false
+    statusMessage.value = '' // Clear message on context change
   },
 )
-// Alternatively, you could watch props.gameLogo if that's more reliable for your setup.
 
+/**
+ * Handles the purchase button click.
+ * Sets the button state to "Adding...", emits the 'purchase' event,
+ * and provides a callback for the parent to report the purchase status.
+ * Updates button state and ARIA message based on the status.
+ */
 const triggerPurchase = () => {
   if (isAdding.value || justAdded.value || alreadyExists.value) return
   isAdding.value = true
+  statusMessage.value = 'Adding to cart.'
 
   emit(
     'purchase',
+    /**
+     * Callback for the parent component to report purchase status.
+     * @param {String} status - The status of the purchase attempt ('added', 'already_in_cart', or other).
+     */
     (status) => {
       isAdding.value = false
+      statusMessage.value = ''; // Clear "Adding to cart" before new message or if no specific message
+
       if (status === 'added') {
         justAdded.value = true
+        statusMessage.value = 'Item successfully added to cart.'
         triggerParticleBurst()
         setTimeout(() => {
           justAdded.value = false
-        }, 1500)
+          // Clear message only if it's still the "added" confirmation
+          if (statusMessage.value === 'Item successfully added to cart.') {
+            statusMessage.value = ''
+          }
+        }, JUST_ADDED_TIMEOUT)
       } else if (status === 'already_in_cart') {
         alreadyExists.value = true
-        // No timeout for alreadyExists, let it persist until game changes or page reloads
-        // Or add a shorter timeout if preferred:
+        statusMessage.value = 'Item is already in your cart.'
+        // Example: Optionally clear "already in cart" message and state after a delay
         // setTimeout(() => {
-        //   alreadyExists.value = false;
-        // }, 2000);
+        //   if (alreadyExists.value && statusMessage.value === 'Item is already in your cart.') {
+        //     statusMessage.value = '';
+        //     alreadyExists.value = false; // Reset visual state too
+        //   }
+        // }, ALREADY_EXISTS_TIMEOUT);
+      } else {
+        // If purchase failed or had another status, ensure loading message is cleared
+        statusMessage.value = '';
       }
     },
-    buyButtonRef.value,
+    buyButtonRef.value, // Pass button ref for potential parent-driven animations
   )
 }
 
+/**
+ * Handles click events on the entire card, triggering a purchase if appropriate.
+ */
 const handleCardClick = () => {
+  // Only trigger purchase if the button isn't in a temporary disabled-like state
   if (buyButtonRef.value && !isAdding.value && !justAdded.value && !alreadyExists.value) {
     triggerPurchase()
   }
 }
 
+/**
+ * Triggers a visual particle burst effect originating from the buy button.
+ * Sets particle positions and toggles visibility.
+ */
 const triggerParticleBurst = () => {
   if (buyButtonRef.value) {
     const rect = buyButtonRef.value.getBoundingClientRect()
-    const cardRect = buyButtonRef.value.closest('.key-card').getBoundingClientRect()
+    const cardRect = buyButtonRef.value.closest('.key-card').getBoundingClientRect() // Get card's relative position
+    // Calculate burst origin relative to the card itself
     particleBurstPosition.value = {
       top: `${rect.top - cardRect.top + rect.height / 2}px`,
       left: `${rect.left - cardRect.left + rect.width / 2}px`,
@@ -106,19 +179,23 @@ const triggerParticleBurst = () => {
   nextTick(() => {
     setTimeout(() => {
       showParticles.value = false
-    }, 600)
+    }, PARTICLE_BURST_DURATION)
   })
 }
 
+/**
+ * Generates a random style object for an individual particle in the burst effect.
+ * @returns {Object} A style object with CSS custom properties for particle animation.
+ */
 const particleStyle = () => {
-  const angle = Math.random() * 360
-  const distance = Math.random() * 40 + 30
-  const duration = Math.random() * 0.3 + 0.4
+  const angle = Math.random() * PARTICLE_RANDOM_MAX_ANGLE;
+  const distance = Math.random() * PARTICLE_RANDOM_MAX_ADD_DISTANCE + PARTICLE_RANDOM_BASE_DISTANCE;
+  const duration = Math.random() * PARTICLE_RANDOM_MAX_ADD_DURATION + PARTICLE_RANDOM_BASE_DURATION;
   return {
     '--angle': `${angle}deg`,
     '--distance': `${distance}px`,
     '--duration': `${duration}s`,
-    background: `hsl(${Math.random() * 360}, 80%, 65%)`,
+    background: `hsl(${Math.random() * PARTICLE_RANDOM_MAX_ANGLE}, ${PARTICLE_HSL_SATURATION}, ${PARTICLE_HSL_LIGHTNESS})`,
   }
 }
 </script>
@@ -363,6 +440,17 @@ const particleStyle = () => {
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
   animation-duration: var(--duration);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 @keyframes burst {

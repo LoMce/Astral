@@ -7,35 +7,12 @@
         opacity: 'var(--galaxy-opacity, 0.15)',
       }"
     ></div>
-    <div v-for="star in stars" :key="'star-' + star.id" class="star" :style="star.style"></div>
-    <div
-      v-for="streak in rainStreaks"
-      :key="'rain-' + streak.id"
-      class="rain-streak"
-      :style="streak.style"
-    ></div>
-    <div
-      v-for="particle in orbitalParticles"
-      :key="'orbital-' + particle.id"
-      class="orbital-particle"
-      :class="particle.particleClass"
-      :style="particle.style"
-    ></div>
+    <canvas ref="backgroundCanvasRef" class="background-canvas"></canvas>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-// useUiSettingsStore and watch removed
-
-// uiSettingsStore removed
-
-const props = defineProps({
-  selectedGame: {
-    type: String,
-    default: '',
-  },
-})
+import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 
 // Import SVG strings
 import { defaultGalaxySvgString } from '@/assets/svgs/defaultGalaxy.js'
@@ -43,12 +20,80 @@ import { minecraftGalaxySvgString } from '@/assets/svgs/minecraftGalaxy.js'
 import { fortniteGalaxySvgString } from '@/assets/svgs/fortniteGalaxy.js'
 import { codGalaxySvgString } from '@/assets/svgs/codGalaxy.js'
 
-const stars = ref([])
-const rainStreaks = ref([])
-const orbitalParticles = ref([])
+// --- Particle Configuration Constants ---
+const NUM_STARS = 30;
+const STAR_MIN_SIZE = 0.5;
+const STAR_MAX_SIZE_ADD = 1.5; // Max size = MIN_SIZE + MAX_SIZE_ADD
+const STAR_VX_VY_FACTOR = 0.05;
+const STAR_TWINKLE_MIN_SPEED = 0.002;
+const STAR_TWINKLE_MAX_SPEED_ADD = 0.005;
+const STAR_MAX_OPACITY_BASE = 0.5;
+const STAR_MAX_OPACITY_ADD = 0.2;
+const STAR_MIN_OPACITY_BASE = 0.1;
+const STAR_MIN_OPACITY_ADD = 0.1;
 
-// Note: %23 is the URL encoding for #, used for hex colors in fill attributes within the SVG strings.
+const NUM_RAIN_STREAKS = 15;
+const RAIN_MIN_HEIGHT = 10;
+const RAIN_MAX_HEIGHT_ADD = 20;
+const RAIN_MIN_SPEED = 1;
+const RAIN_MAX_SPEED_ADD = 1;
+const RAIN_MIN_OPACITY = 0.01;
+const RAIN_MAX_OPACITY_ADD = 0.05;
 
+const NUM_ORBITALS = 1;
+const ORBITAL_MIN_SIZE = 2;
+const ORBITAL_MAX_SIZE_ADD = 4;
+const ORBITAL_BASE_OPACITY_MIN = 0.1;
+const ORBITAL_BASE_OPACITY_ADD = 0.2;
+const ORBITAL_RADIUS_FACTOR_MIN = 0.1;
+const ORBITAL_RADIUS_FACTOR_ADD = 0.15;
+const ORBITAL_SPEED_MIN = 0.002;
+const ORBITAL_SPEED_ADD = 0.005;
+const ORBITAL_OPACITY_PULSATE_FACTOR = 0.5;
+const ORBITAL_OPACITY_PULSATE_BASE_ADD = 0.5;
+
+
+const props = defineProps({
+  /**
+   * The currently selected game theme value (e.g., 'minecraft', 'fortnite').
+   * Determines which galaxy SVG and potentially theme colors are used.
+   * @type {String}
+   */
+  selectedGame: {
+    type: String,
+    default: '',
+  },
+})
+
+const backgroundCanvasRef = ref(null)
+/** @type {CanvasRenderingContext2D | null} */
+let ctx = null
+let animationFrameId = null
+
+// Particle arrays
+/** @type {Array<Object>} */
+let starsArray = []
+/** @type {Array<Object>} */
+let rainStreaksArray = []
+/** @type {Array<Object>} */
+let orbitalParticlesArray = []
+
+/**
+ * Reactive object holding theme-based colors for canvas drawing.
+ * Updated by `updateThemeColors` based on CSS custom properties.
+ */
+const themeColors = ref({
+  starColor: 'rgba(200, 190, 230, 0.5)',
+  rainColor: 'rgba(255, 0, 255, 0.06)',
+  orbitalPrimaryColor: 'rgba(138, 43, 226, 1)',
+  orbitalAccentColor: 'rgba(255, 0, 255, 1)',
+  orbitalSecondaryColor: 'rgba(72, 61, 139, 1)'
+})
+
+/**
+ * Computes the appropriate galaxy SVG data string based on the selected game theme.
+ * @returns {String} The SVG data string for the galaxy background.
+ */
 const galaxySvgUrl = computed(() => {
   switch (props.selectedGame) {
     case 'minecraft':
@@ -62,97 +107,228 @@ const galaxySvgUrl = computed(() => {
   }
 })
 
+/**
+ * Creates and initializes star particles.
+ * Populates `starsArray` with star objects, each having properties for position,
+ * size, opacity, velocity, and twinkle effect.
+ */
 const createStars = () => {
-  stars.value = []
-  // Removed check for uiSettingsStore.animationsEnabled
-  const numStars = 30 // Reduced from 60
-  for (let i = 0; i < numStars; i++) {
-    const size = Math.random() * 1.2 + 0.15
-    const startX = Math.random() * 100
-    const startY = Math.random() * 100
-    const parallaxFactor = 0.15 + (size / 1.35) * 0.5
-    const driftDistanceX = (Math.random() - 0.5) * 20 * parallaxFactor
-    const driftDistanceY = (Math.random() - 0.5) * 20 * parallaxFactor
-    stars.value.push({
+  if (!backgroundCanvasRef.value) return;
+  starsArray = []
+  for (let i = 0; i < NUM_STARS; i++) {
+    const size = Math.random() * STAR_MAX_SIZE_ADD + STAR_MIN_SIZE;
+    starsArray.push({
       id: i,
-      style: {
-        width: `${size}px`,
-        height: `${size}px`,
-        left: `${startX}vw`,
-        top: `${startY}vh`,
-        '--start-x': `${startX}vw`,
-        '--start-y': `${startY}vh`,
-        '--end-x': `${startX + driftDistanceX}vw`,
-        '--end-y': `${startY + driftDistanceY}vh`,
-        animationDelay: `${Math.random() * 4}s`,
-        animationDuration: `${Math.random() * 35 + 70}s, ${4 + Math.random() * 2.5}s`,
-      },
+      x: Math.random() * backgroundCanvasRef.value.width,
+      y: Math.random() * backgroundCanvasRef.value.height,
+      size: size,
+      opacity: Math.random() * (STAR_MAX_OPACITY_BASE - STAR_MIN_OPACITY_BASE) + STAR_MIN_OPACITY_BASE,
+      vx: (Math.random() - 0.5) * STAR_VX_VY_FACTOR,
+      vy: (Math.random() - 0.5) * STAR_VX_VY_FACTOR,
+      twinkleSpeed: Math.random() * STAR_TWINKLE_MAX_SPEED_ADD + STAR_TWINKLE_MIN_SPEED,
+      twinkleDirection: Math.random() < 0.5 ? 1 : -1,
+      maxOpacity: STAR_MAX_OPACITY_BASE + Math.random() * STAR_MAX_OPACITY_ADD,
+      minOpacity: STAR_MIN_OPACITY_BASE + Math.random() * STAR_MIN_OPACITY_ADD
     })
   }
 }
 
+/**
+ * Creates and initializes rain streak particles.
+ * Populates `rainStreaksArray` with rain objects, each having properties for position,
+ * height, speed, and opacity.
+ */
 const createRainStreaks = () => {
-  rainStreaks.value = []
-  // Removed check for uiSettingsStore.animationsEnabled
-  const numRainStreaks = 15 // Reduced from 30
-  for (let i = 0; i < numRainStreaks; i++) {
-    rainStreaks.value.push({
+  if (!backgroundCanvasRef.value) return;
+  rainStreaksArray = []
+  for (let i = 0; i < NUM_RAIN_STREAKS; i++) {
+    rainStreaksArray.push({
       id: i,
-      style: {
-        left: `${Math.random() * 100}%`,
-        height: `${Math.random() * 30 + 8}px`,
-        animationDuration: `${Math.random() * 0.6 + 0.7}s`,
-        animationDelay: `${Math.random() * 3}s`,
-        opacity: `${Math.random() * 0.08 + 0.01}`,
-      },
+      x: Math.random() * backgroundCanvasRef.value.width,
+      y: Math.random() * -backgroundCanvasRef.value.height, // Start off-screen top
+      height: Math.random() * RAIN_MAX_HEIGHT_ADD + RAIN_MIN_HEIGHT,
+      speed: Math.random() * RAIN_MAX_SPEED_ADD + RAIN_MIN_SPEED,
+      opacity: Math.random() * RAIN_MAX_OPACITY_ADD + RAIN_MIN_OPACITY
     })
   }
 }
 
+/**
+ * Creates and initializes orbital particles.
+ * Populates `orbitalParticlesArray` with particle objects, each having properties for
+ * position, size, color, opacity, and orbital movement parameters.
+ */
 const createOrbitalParticles = () => {
-  orbitalParticles.value = []
-  // Removed check for uiSettingsStore.animationsEnabled
-  const numOrbitals = 1 // Was 1, effectively showing only 'primary'. Set to 3 to see all.
-  if (numOrbitals > 0) {
-    const orbitalColorClasses = ['primary', 'accent', 'secondary']
-    for (let i = 0; i < numOrbitals; i++) {
-      const size = Math.random() * 7 + 3 // Range: 3px to 10px
-      orbitalParticles.value.push({
+  if (!backgroundCanvasRef.value) return;
+  orbitalParticlesArray = []
+  if (NUM_ORBITALS > 0) {
+    const orbitalColors = [
+      themeColors.value.orbitalPrimaryColor,
+      themeColors.value.orbitalAccentColor,
+      themeColors.value.orbitalSecondaryColor
+    ];
+    for (let i = 0; i < NUM_ORBITALS; i++) {
+      const size = Math.random() * ORBITAL_MAX_SIZE_ADD + ORBITAL_MIN_SIZE;
+      orbitalParticlesArray.push({
         id: i,
-        particleClass: orbitalColorClasses[i % orbitalColorClasses.length],
-        style: {
-          width: `${size}px`,
-          height: `${size}px`,
-          // Ensure particles are spread out across the viewport, not just center
-          '--x-start': `${Math.random() * 60 + 20}vw`,
-          '--y-start': `${Math.random() * 60 + 20}vh`,
-          '--x-mid1': `${Math.random() * 60 + 20}vw`,
-          '--y-mid1': `${Math.random() * 60 + 20}vh`,
-          '--x-mid2': `${Math.random() * 60 + 20}vw`,
-          '--y-mid2': `${Math.random() * 60 + 20}vh`,
-          '--x-mid3': `${Math.random() * 60 + 20}vw`,
-          '--y-mid3': `${Math.random() * 60 + 20}vh`,
-          animationDelay: `${Math.random() * 7}s, 2.5s`,
-          animationDuration: `${Math.random() * 20 + 25}s, 6s`,
-        },
+        x: backgroundCanvasRef.value.width / 2,
+        y: backgroundCanvasRef.value.height / 2,
+        size: size,
+        color: orbitalColors[i % orbitalColors.length],
+        baseOpacity: Math.random() * ORBITAL_BASE_OPACITY_ADD + ORBITAL_BASE_OPACITY_MIN,
+        angle: Math.random() * Math.PI * 2,
+        orbitRadius: Math.min(backgroundCanvasRef.value.width, backgroundCanvasRef.value.height) * 
+                     (Math.random() * ORBITAL_RADIUS_FACTOR_ADD + ORBITAL_RADIUS_FACTOR_MIN),
+        speed: (Math.random() * ORBITAL_SPEED_ADD + ORBITAL_SPEED_MIN) * (Math.random() < 0.5 ? 1 : -1),
+        centerX: backgroundCanvasRef.value.width / 2,
+        centerY: backgroundCanvasRef.value.height / 2,
       })
     }
   }
 }
 
+/**
+ * Sets up or updates the canvas dimensions based on window size.
+ * Also re-initializes all particle types to fit the new dimensions.
+ */
+const setupCanvasDimensions = () => {
+  if (backgroundCanvasRef.value && ctx) {
+    backgroundCanvasRef.value.width = window.innerWidth
+    backgroundCanvasRef.value.height = window.innerHeight
+    createStars()
+    createRainStreaks()
+    createOrbitalParticles() 
+  }
+}
+
+/**
+ * Updates the `themeColors` reactive object by reading CSS custom properties
+ * from the document's root element. This allows canvas particle colors to
+ * adapt to the current theme.
+ */
+const updateThemeColors = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const style = getComputedStyle(document.documentElement);
+  const newStarColor = style.getPropertyValue('--star-color')?.trim() || 'rgba(200, 190, 230, 0.5)';
+  
+  const rainColorBase = style.getPropertyValue('--rain-color-rgb')?.trim() || '173, 216, 230'; // Default light blue
+  const rainOpacity = parseFloat(style.getPropertyValue('--rain-opacity')?.trim()) || 0.06;
+  const newRainColor = `rgba(${rainColorBase}, ${rainOpacity})`;
+
+  themeColors.value = {
+    starColor: newStarColor,
+    rainColor: newRainColor,
+    orbitalPrimaryColor: style.getPropertyValue('--glow-primary')?.trim() || 'rgba(138, 43, 226, 1)',
+    orbitalAccentColor: style.getPropertyValue('--glow-accent')?.trim() || 'rgba(255, 0, 255, 1)',
+    orbitalSecondaryColor: style.getPropertyValue('--glow-secondary')?.trim() || 'rgba(72, 61, 139, 1)',
+  };
+}
+
+/**
+ * Main animation loop for drawing particles on the canvas.
+ * Clears the canvas and then draws each type of particle (stars, rain, orbitals)
+ * with their updated positions and appearances.
+ * Schedules the next frame using `requestAnimationFrame`.
+ */
+const animationLoop = () => {
+  if (!ctx || !backgroundCanvasRef.value) {
+    animationFrameId = requestAnimationFrame(animationLoop);
+    return;
+  }
+
+  ctx.clearRect(0, 0, backgroundCanvasRef.value.width, backgroundCanvasRef.value.height);
+
+  // Draw Stars
+  starsArray.forEach(star => {
+    star.opacity += star.twinkleSpeed * star.twinkleDirection;
+    if (star.opacity > star.maxOpacity || star.opacity < star.minOpacity) {
+      star.twinkleDirection *= -1;
+      star.opacity = Math.max(star.minOpacity, Math.min(star.maxOpacity, star.opacity)); // Clamp
+    }
+    star.x += star.vx;
+    star.y += star.vy;
+
+    // Wrap around edges instead of bouncing for smoother parallax
+    if (star.x < 0) star.x = backgroundCanvasRef.value.width;
+    if (star.x > backgroundCanvasRef.value.width) star.x = 0;
+    if (star.y < 0) star.y = backgroundCanvasRef.value.height;
+    if (star.y > backgroundCanvasRef.value.height) star.y = 0;
+    
+    const starBaseColor = themeColors.value.starColor.substring(0, themeColors.value.starColor.lastIndexOf(','))
+    ctx.fillStyle = `${starBaseColor}, ${star.opacity})`;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw Rain Streaks
+  ctx.strokeStyle = themeColors.value.rainColor;
+  ctx.lineWidth = 1;
+  rainStreaksArray.forEach(streak => {
+    streak.y += streak.speed;
+    if (streak.y > backgroundCanvasRef.value.height) {
+      streak.y = Math.random() * -streak.height * 5; // Reset further above
+      streak.x = Math.random() * backgroundCanvasRef.value.width;
+    }
+    ctx.beginPath();
+    ctx.moveTo(streak.x, streak.y);
+    ctx.lineTo(streak.x, streak.y + streak.height);
+    ctx.stroke();
+  });
+  
+  // Draw Orbital Particles
+  orbitalParticlesArray.forEach(particle => {
+    particle.angle += particle.speed;
+    particle.x = particle.centerX + Math.cos(particle.angle) * particle.orbitRadius;
+    particle.y = particle.centerY + Math.sin(particle.angle) * particle.orbitRadius;
+    
+    const currentOpacity = particle.baseOpacity * 
+                           ((Math.sin(particle.angle * 2) + 1) / 2 * ORBITAL_OPACITY_PULSATE_FACTOR + ORBITAL_OPACITY_PULSATE_BASE_ADD);
+
+    const particleBaseColor = particle.color.substring(0, particle.color.lastIndexOf(','))
+    ctx.fillStyle = `${particleBaseColor}, ${currentOpacity})`;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); // Use particle.size directly as radius
+    ctx.fill();
+  });
+
+  animationFrameId = requestAnimationFrame(animationLoop);
+}
+
 onMounted(() => {
-  // Particle creation functions called unconditionally
-  createStars()
-  createRainStreaks()
-  createOrbitalParticles()
+  if (backgroundCanvasRef.value) {
+    ctx = backgroundCanvasRef.value.getContext('2d');
+    setupCanvasDimensions(); // This will also call createParticles
+    window.addEventListener('resize', setupCanvasDimensions);
+    
+    updateThemeColors(); // Initial theme colors
+    
+    // Particles are created within setupCanvasDimensions initially
+    // and then again if resize occurs.
+    
+    animationLoop();
+  }
 })
 
-// Watch for uiSettingsStore.animationsEnabled removed
+onBeforeUnmount(() => {
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+  }
+  window.removeEventListener('resize', setupCanvasDimensions);
+})
+
+watch(() => props.selectedGame, () => {
+  nextTick(() => {
+    updateThemeColors();
+    // Re-create orbital particles as their base colors might change directly.
+    // Stars and rain use themeColors.value directly in draw loop.
+    createOrbitalParticles(); 
+  });
+});
 
 </script>
 
 <style scoped>
-/* Styles for ImmersiveBackground elements */
 .immersive-background-effects {
   position: absolute;
   top: 0;
@@ -165,7 +341,7 @@ onMounted(() => {
 
 #galaxy-layer {
   position: absolute;
-  top: -25%;
+  top: -25%; /* Ensure it covers edges during rotation/scaling */
   left: -25%;
   width: 150%;
   height: 150%;
@@ -175,13 +351,23 @@ onMounted(() => {
   animation-duration: 300s;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  animation-play-state: running; /* Default state */
-  z-index: -1;
+  animation-play-state: running;
+  z-index: -1; /* Behind canvas */
   transition:
     opacity var(--transition-speed) ease,
-    background-image var(--transition-speed) ease; /* Smooth transition for new SVG */
+    background-image var(--transition-speed) ease;
 }
-/* .animations-disabled #galaxy-layer removed */
+
+.background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0; /* On top of galaxy layer */
+}
+
 @keyframes slowRotateGalaxy {
   0% {
     transform: rotate(0deg) scale(1.15);
@@ -191,133 +377,5 @@ onMounted(() => {
   }
 }
 
-.star {
-  position: absolute;
-  background-color: var(--star-color);
-  border-radius: 50%;
-  animation-name: twinkle-smooth, parallax-drift;
-  animation-timing-function: ease-in-out, linear;
-  animation-iteration-count: infinite, infinite;
-  animation-direction: alternate, normal;
-  animation-play-state: running; /* Default state */
-  transition: background-color var(--transition-speed) ease;
-}
-/* .animations-disabled .star removed */
-@keyframes twinkle-smooth {
-  0% {
-    opacity: var(--star-opacity-min);
-    transform: scale(0.5) translate(var(--start-x), var(--start-y));
-  }
-  50% {
-    opacity: var(--star-opacity-max);
-    transform: scale(1) translate(var(--start-x), var(--start-y));
-  }
-  100% {
-    opacity: var(--star-opacity-min);
-    transform: scale(0.5) translate(var(--start-x), var(--start-y));
-  }
-}
-@keyframes parallax-drift {
-  0% {
-    /* transform: translate(var(--start-x), var(--start-y)); Combined into twinkle */
-  }
-  100% {
-    transform: translate(var(--end-x), var(--end-y)) scale(var(--current-scale, 1));
-  }
-}
-
-.rain-streak {
-  position: absolute;
-  bottom: 100%;
-  width: 1px;
-  background: linear-gradient(
-    to bottom,
-    rgba(var(--rain-color-rgb), 0),
-    rgba(var(--rain-color-rgb), var(--rain-opacity))
-  );
-  animation-name: fall-rain;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-play-state: running; /* Default state */
-  transition: background var(--transition-speed) ease;
-  border-radius: var(--rain-border-radius, 0);
-}
-/* .animations-disabled .rain-streak removed */
-@keyframes fall-rain {
-  to {
-    transform: translateY(120vh) scaleY(1.5);
-    bottom: -50px;
-    opacity: 0;
-  }
-}
-
-.orbital-particle {
-  position: fixed;
-  border-radius: 50%;
-  background-color: var(--glow-primary);
-  box-shadow:
-    0 0 8px var(--glow-primary),
-    0 0 15px var(--glow-primary);
-  opacity: 0;
-  animation-name: drift-bokeh, fadeInOrbitals;
-  animation-timing-function: linear, ease-out;
-  animation-iteration-count: infinite, 1;
-  animation-fill-mode: forwards;
-  animation-play-state: running; /* Default state */
-  z-index: 1;
-  filter: blur(2.5px);
-  transition:
-    background-color var(--transition-speed) ease,
-    box-shadow var(--transition-speed) ease;
-}
-/* .animations-disabled .orbital-particle removed */
-.orbital-particle.primary {
-  background-color: var(--glow-primary);
-  box-shadow:
-    0 0 8px var(--glow-primary),
-    0 0 15px var(--glow-primary);
-}
-.orbital-particle.accent {
-  background-color: var(--glow-accent);
-  box-shadow:
-    0 0 8px var(--glow-accent),
-    0 0 15px var(--glow-accent);
-}
-.orbital-particle.secondary {
-  background-color: var(--glow-secondary);
-  box-shadow:
-    0 0 7px var(--glow-secondary),
-    0 0 12px var(--glow-secondary);
-}
-
-@keyframes drift-bokeh {
-  0% {
-    transform: translate(var(--x-start), var(--y-start)) scale(0.3);
-    opacity: var(--orbital-opacity-min);
-  }
-  25% {
-    transform: translate(var(--x-mid1), var(--y-mid1)) scale(0.6);
-    opacity: var(--orbital-opacity-mid);
-  }
-  50% {
-    transform: translate(var(--x-mid2), var(--y-mid2)) scale(0.25);
-    opacity: var(--orbital-opacity-max);
-  }
-  75% {
-    transform: translate(var(--x-mid3), var(--y-mid3)) scale(0.7);
-    opacity: var(--orbital-opacity-mid);
-  }
-  100% {
-    transform: translate(var(--x-start), var(--y-start)) scale(0.3);
-    opacity: var(--orbital-opacity-min);
-  }
-}
-@keyframes fadeInOrbitals {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: var(--orbital-opacity-max);
-  }
-}
+/* Removed .star, .rain-streak, .orbital-particle and their keyframes */
 </style>

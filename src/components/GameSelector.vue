@@ -16,6 +16,7 @@
       @keydown.down.prevent="navigateOptions('down')"
       @keydown.up.prevent="navigateOptions('up')"
     >
+      <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
       <img
         :src="selectedGameDisplayLogo"
         :alt="selectedGameDisplayName ? `${selectedGameDisplayName} logo` : 'Select game icon'"
@@ -65,6 +66,7 @@
           @click="selectOption(game)"
           @mouseenter="highlightedIndex = index"
         >
+          <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
           <img :src="game.logoSrc" :alt="`${game.name} logo`" />
           <span>{{ game.name }}</span>
         </li>
@@ -289,11 +291,16 @@ onBeforeUnmount(() => {
     border-color var(--transition-speed) ease,
     box-shadow var(--transition-speed) ease,
     background-color var(--transition-speed) ease,
-    color var(--transition-speed) ease;
+    color var(--transition-speed) ease,
+    transform var(--transition-speed) ease; /* Added transform to transition */
   box-shadow:
     0 0 4px rgba(var(--glow-primary-rgb), 0.1),
     inset 0 0 4px rgba(0, 0, 0, 0.2);
   position: relative;
+}
+.custom-select-selected:active {
+  transform: scale(0.98);
+  background-color: rgba(var(--card-bg-color-opaque), 0.85); /* Slightly darken */
 }
 .custom-select-selected.open {
   border-color: rgba(var(--glow-accent-rgb), 0.6);

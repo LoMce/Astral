@@ -64,7 +64,7 @@ const createCODEffects = () => {
     })
   }
 
-  const numDogTags = 5
+  const numDogTags = 3 // Reduced from 5
   for (let i = 0; i < numDogTags; i++) {
     dogTags.value.push({
       id: i,
