@@ -61,7 +61,7 @@ watch(
 // Alternatively, you could watch props.gameLogo if that's more reliable for your setup.
 
 const triggerPurchase = () => {
-  if (isAdding.value || justAdded.value || alreadyExists.value) return
+  if (isAdding.value) return; // Allow clicks even if justAdded or alreadyExists is true
   isAdding.value = true
 
   emit(
