@@ -60,28 +60,64 @@ function generateRandomKey() {
 
 onMounted(() => {
   email.value = localStorage.getItem('purchaseEmail') || '';
-  const storedItems = localStorage.getItem('purchaseItems');
-  if (storedItems) {
+  const storedItemsString = localStorage.getItem('purchaseItems');
+  let parsedItems = []; // Initialize as empty array
+
+  if (storedItemsString) {
     try {
-      let parsedItems = JSON.parse(storedItems);
-      if (Array.isArray(parsedItems)) {
-        items.value = parsedItems.map(item => {
-          const keys = [];
-          // Ensure quantity is a number, default to 1 if not present or invalid
-          const quantity = Number(item.quantity) || 0; 
-          for (let i = 0; i < quantity; i++) {
-            keys.push(generateRandomKey());
-          }
-          return { ...item, generatedKeys: keys };
-        });
-      } else {
-        items.value = []; // Should be an array
+      parsedItems = JSON.parse(storedItemsString);
+      if (!Array.isArray(parsedItems)) {
+        console.error('Parsed items is not an array. Initializing to empty.', parsedItems);
+        parsedItems = []; // Ensure it's an array if parsing succeeded but was not an array
       }
     } catch (e) {
-      console.error('Error parsing purchase items or generating keys:', e);
-      items.value = [];
+      console.error('Error parsing purchaseItems from localStorage:', e);
+      // parsedItems remains [], so items.value will be empty by default later.
     }
   }
+
+  if (parsedItems.length > 0) {
+    try {
+      items.value = parsedItems.map(item => {
+        // Ensure item is a valid object before processing
+        if (typeof item !== 'object' || item === null) {
+          console.warn('Encountered invalid item in parsedItems:', item);
+          // Return a placeholder structure that won't break key generation or display
+          // It will be filtered out later if desired, or displayed as an error item.
+          return { 
+            id: `invalid_item_${Date.now()}_${Math.random()}`, 
+            name: 'Invalid Item Data', 
+            quantity: 0, 
+            price: 0, 
+            generatedKeys: [] 
+          };
+        }
+
+        const keys = [];
+        const quantity = Number(item.quantity) || 0;
+        for (let i = 0; i < quantity; i++) {
+          keys.push(generateRandomKey());
+        }
+        
+        const price = Number(item.price) || 0;
+        // Retain original properties, ensure price and quantity are numbers, add keys
+        return { ...item, price: price, quantity: quantity, generatedKeys: keys };
+      }).filter(item => item && item.name !== 'Invalid Item Data'); // Filter out placeholder invalid items
+      
+      if (items.value.length === 0 && parsedItems.length > 0) {
+        // This case means all items were invalid
+        console.warn('All parsed items were invalid.');
+      }
+
+    } catch (mapError) {
+      console.error('Error processing (mapping) parsed items or generating keys:', mapError);
+      items.value = []; // If mapping fails, clear items to show "No items"
+    }
+  } else {
+    // If parsedItems is empty (either from bad JSON or empty localStorage)
+    items.value = [];
+  }
+
   total.value = localStorage.getItem('purchaseTotal') || '0.00';
 
   // Clear the stored data after displaying it
@@ -203,9 +239,9 @@ onMounted(() => {
 .order-summary-section li {
   padding: 0.85rem 0.5rem; /* Increased padding */
   border-bottom: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent); /* Softer border */
-  opacity: 0;
+  opacity: 0; /* Base style for animation */
   animation: itemAppear 0.5s ease-out forwards;
-  animation-fill-mode: backwards; /* Item starts hidden */
+  /* animation-fill-mode: backwards; */ /* Removed as per Step 2 suggestion, base opacity handles start state */
   transition: background-color var(--transition-speed-fast) ease;
   border-radius: calc(var(--border-radius) / 2);
 }
