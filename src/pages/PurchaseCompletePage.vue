@@ -1,21 +1,41 @@
 <template>
-  <div class="purchase-complete-page">
-    <h1>Purchase Successful!</h1>
-    <div v-if="email">
-      <p>Thank you for your purchase, {{ email }}!</p>
-      <h2>Order Summary:</h2>
-      <ul v-if="items.length">
-        <li v-for="item in items" :key="item.id">
-          {{ item.name }} - Quantity: {{ item.quantity }} - Price: ${{ item.price.toFixed(2) }}
-        </li>
-      </ul>
-      <p v-else>No items found in your order.</p>
-      <p class="total-amount">Total: ${{ total }}</p>
-    </div>
-    <div v-else>
-      <p>Unable to retrieve purchase details.</p>
-    </div>
-    <router-link to="/" class="home-button">Go to Homepage</router-link>
+  <div class="purchase-success-container">
+    <section class="header-section">
+      <h1>Purchase Complete!</h1>
+      <p v-if="email">Thank you for your purchase, {{ email }}!</p>
+      <p v-else>Your order has been successfully processed.</p>
+    </section>
+
+    <section class="order-summary-section">
+      <h2>Order Summary</h2>
+      <div v-if="items.length">
+        <ul>
+          <li v-for="item in items" :key="item.id">
+            {{ item.name }} - Quantity: {{ item.quantity }} - Price: ${{ item.price ? item.price.toFixed(2) : 'N/A' }}
+          </li>
+        </ul>
+        <p class="total-amount">Total: ${{ total }}</p>
+      </div>
+      <div v-else>
+        <p>No items found in your order. Your order might still be processing or details are unavailable.</p>
+      </div>
+    </section>
+
+    <section class="incentive-section">
+      <div class="incentive-banner">
+        <h4>A Gift For Your Continued Journey!</h4>
+        <p>As a token of our appreciation, enjoy <strong>15% off</strong> your next game key purchase with us.</p>
+        <div class="discount-code-area">
+          <span>NEXTGAME15</span>
+        </div>
+        <p class="discount-instruction">Use this code at checkout on your next order.</p>
+      </div>
+    </section>
+
+    <section class="actions-section">
+      <router-link to="/" class="action-button primary">Continue Shopping</router-link>
+      <router-link to="/" class="action-button secondary">Explore More Games</router-link>
+    </section>
   </div>
 </template>
 
@@ -47,157 +67,419 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.purchase-complete-page {
-  max-width: 700px; /* Consistent with .container */
-  margin: 0 auto; /* Centering */
-  padding: 85px 2rem 2rem; /* Approx 70px header + 15px extra space */
+/* Base Variables (consider moving to a global style if not already there) */
+:root {
+  --glow-primary: #00aeff; /* Example: Bright Blue */
+  --glow-primary-rgb: 0, 174, 255;
+  --glow-accent: #00ffdd;  /* Example: Bright Cyan */
+  --glow-accent-rgb: 0, 255, 221;
+  --text-color: #e0e0e0;
+  --card-bg-color: #1a1a1a;
+  --border-radius: 8px;
+  --transition-speed-fast: 0.2s;
+  --transition-speed-medium: 0.4s;
+}
+
+.purchase-success-container {
+  max-width: 700px; /* Consistent with original page style */
+  margin: 2rem auto;
+  padding: 2rem;
   background-color: var(--card-bg-color);
   border-radius: var(--border-radius);
-  border: 1px solid rgba(var(--glow-primary-rgb), 0.3);
-  box-shadow:
-    0 0 15px rgba(var(--glow-primary-rgb), 0.08),
-    0 0 25px rgba(var(--glow-primary-rgb), 0.06),
-    inset 0 0 10px rgba(0, 0, 0, 0.25);
   color: var(--text-color);
-  text-align: center;
-  animation: fadeInContainer var(--animation-speed-slow) 0.5s ease-out forwards;
-  opacity: 0;
+  font-family: 'Inter', 'Arial', sans-serif; /* Modern Fallback font */
+  opacity: 0; /* Initial state for animation */
+  animation: fadeInContainer 0.8s 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes fadeInContainer {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(50px) scale(0.95);
+    filter: brightness(0.5);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: brightness(1);
   }
 }
 
-h1 {
-  font-family: 'Orbitron', sans-serif;
+.header-section h1 {
+  text-align: center;
   color: var(--glow-primary);
-  text-shadow: 0 0 8px rgba(var(--glow-primary-rgb), 0.4), 0 0 12px rgba(var(--glow-primary-rgb), 0.2);
-  margin-bottom: 1.5rem;
-  font-size: 2.2em; /* Match .main-title if possible */
+  margin-bottom: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.2em;
+  animation: textGlowPulse 2s infinite alternate, fadeInText 1s 0.5s ease-out forwards;
+  opacity: 0; /* Initial state for fadeInText */
+  line-height: 1.3;
 }
 
-h2 {
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes textGlowPulse {
+  0% {
+    text-shadow: 0 0 8px rgba(var(--glow-primary-rgb), 0.4), 0 0 12px rgba(var(--glow-primary-rgb), 0.2);
+    color: var(--glow-primary);
+  }
+  100% {
+    text-shadow: 0 0 12px rgba(var(--glow-primary-rgb), 0.7), 0 0 20px rgba(var(--glow-primary-rgb), 0.4);
+    color: color-mix(in srgb, var(--glow-primary) 80%, white 20%);
+  }
+}
+
+.header-section p {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeInText 1s 0.8s ease-out forwards; /* Staggered fade in */
+}
+
+.order-summary-section {
+  background-color: color-mix(in srgb, var(--card-bg-color) 90%, white 5%); /* Slightly lighter */
+  padding: 1.5rem;
+  border-radius: var(--border-radius); /* Consistent border-radius */
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: sectionFadeIn 0.7s 1s ease-out forwards;
+}
+
+@keyframes sectionFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+.order-summary-section h2 {
   font-family: 'Orbitron', sans-serif;
   color: var(--text-color);
-  text-shadow: 0 0 4px rgba(var(--text-color), 0.2);
-  margin-top: 2rem;
   margin-bottom: 1rem;
-  font-size: 1.6em;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 25%, transparent); /* Softer border */
+  padding-bottom: 0.75rem; /* Increased padding */
+  font-size: 1.5em; /* Adjusted size */
 }
 
-p {
-  margin-bottom: 0.75rem;
-  line-height: 1.7;
-  color: var(--text-muted-color);
-}
-
-p:first-of-type { /* "Thank you for your purchase..." */
-  color: var(--text-color);
-  font-size: 1.1em;
-}
-
-ul {
+.order-summary-section ul {
   list-style-type: none;
   padding: 0;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1rem 0;
 }
 
-li {
-  background-color: rgba(var(--glow-secondary-rgb), 0.1);
-  border: 1px solid rgba(var(--glow-secondary-rgb), 0.25);
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  border-radius: calc(var(--border-radius) / 1.5);
-  text-align: left;
-  color: var(--text-color);
-  transition:
-    background-color var(--transition-speed) ease,
-    border-color var(--transition-speed) ease;
+.order-summary-section li {
+  padding: 0.85rem 0.5rem; /* Increased padding */
+  border-bottom: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent); /* Softer border */
+  opacity: 0;
+  animation: itemAppear 0.5s ease-out forwards;
+  animation-fill-mode: backwards; /* Item starts hidden */
+  transition: background-color var(--transition-speed-fast) ease;
+  border-radius: calc(var(--border-radius) / 2);
 }
-li:hover {
-  background-color: rgba(var(--glow-secondary-rgb), 0.15);
-  border-color: rgba(var(--glow-secondary-rgb), 0.4);
+.order-summary-section li:hover {
+  background-color: rgba(var(--glow-primary-rgb), 0.05);
+}
+
+/* Apply staggered delay - This is a simplified approach.
+   For true staggering on v-for, JS would be more robust.
+   This will make all items appear at the same time after a delay.
+   To make them appear one after another, each li would need a different delay.
+   This is hard to do with just CSS when items are dynamically generated.
+   We'll apply a base delay and they'll all come in together.
+*/
+.order-summary-section li:nth-child(1) { animation-delay: 1.2s; }
+.order-summary-section li:nth-child(2) { animation-delay: 1.3s; }
+.order-summary-section li:nth-child(3) { animation-delay: 1.4s; }
+/* Add more if typically more items are expected */
+.order-summary-section li:nth-child(n+4) { animation-delay: 1.5s; }
+
+
+.order-summary-section li:last-child {
+  border-bottom: none;
+}
+
+@keyframes itemAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .total-amount {
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 700;
-  font-size: 1.4em;
-  margin-top: 1.5rem;
-  margin-bottom: 2rem;
+  font-family: 'Orbitron', sans-serif; /* Consistent font */
+  font-weight: bold;
+  font-size: 1.3em; /* Slightly larger */
+  text-align: right;
   color: var(--glow-accent);
-  text-shadow: 0 0 6px rgba(var(--glow-accent-rgb), 0.4);
+  margin-top: 1.5rem; /* More spacing */
+  padding-top: 1rem; /* Spacing from list */
+  border-top: 1px solid color-mix(in srgb, var(--text-color) 25%, transparent); /* Separator */
+  opacity: 0;
+  animation: fadeInText 1s 1.6s ease-out forwards;
 }
 
-.home-button {
-  display: inline-block;
-  margin-top: 1.5rem;
-  padding: 12px 24px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1em;
-  font-weight: 700;
-  color: var(--text-color);
-  background: linear-gradient(
-    90deg,
-    rgba(var(--glow-primary-rgb), 0.22),
-    rgba(var(--glow-accent-rgb), 0.28)
-  );
-  border: 1px solid rgba(var(--glow-accent-rgb), 0.55);
+.incentive-banner {
+  background: linear-gradient(145deg, rgba(var(--glow-primary-rgb), 0.08), rgba(var(--glow-accent-rgb), 0.08)); /* Slightly more pronounced */
+  padding: 1.5rem;
   border-radius: var(--border-radius);
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  transition: all var(--transition-speed) ease;
-  box-shadow: 0 0 8px rgba(var(--glow-accent-rgb), 0.2);
-  text-decoration: none;
-  text-shadow: 0 0 3px rgba(0,0,0,0.3);
+  text-align: center;
+  margin-bottom: 2rem;
+  border: 1px solid var(--glow-accent);
+  transition: transform var(--transition-speed-medium) ease,
+              box-shadow var(--transition-speed-medium) ease,
+              border-color var(--transition-speed-medium) ease;
+  opacity: 0;
+  animation: sectionFadeIn 0.7s 1.8s ease-out forwards;
 }
 
-.home-button:hover, .home-button:focus-visible {
-  background: linear-gradient(
-    90deg,
-    rgba(var(--glow-primary-rgb), 0.3),
-    rgba(var(--glow-accent-rgb), 0.35)
-  );
-  border-color: rgba(var(--glow-accent-rgb), 0.75);
+.incentive-banner:hover, .incentive-banner:focus-visible {
+  transform: scale(1.03) translateY(-3px); /* Consistent lift */
+  box-shadow: 0 0 25px rgba(var(--glow-accent-rgb), 0.5); /* Enhanced glow */
+  border-color: color-mix(in srgb, var(--glow-accent) 80%, white 20%);
+  outline: none;
+}
+.incentive-banner:focus-visible {
+   outline: 2px solid var(--glow-accent);
+   outline-offset: 3px;
+}
+
+.incentive-banner h4 {
+  font-family: 'Orbitron', sans-serif;
   color: var(--glow-accent);
-  box-shadow:
-    0 0 12px rgba(var(--glow-accent-rgb), 0.3),
-    0 0 18px rgba(var(--glow-accent-rgb), 0.15);
-  transform: translateY(-2px) scale(1.02);
-  outline: none; /* Ensure custom focus is cleaner */
+  font-size: 1.4em;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 0 6px rgba(var(--glow-accent-rgb), 0.4); /* Slightly stronger shadow */
 }
 
-.home-button:active {
-  transform: translateY(0px) scale(1);
-  background: rgba(var(--glow-accent-rgb), 0.15);
-  box-shadow: 0 0 5px rgba(var(--glow-accent-rgb), 0.15);
+.incentive-banner p {
+  color: var(--text-color); /* Ensured consistency */
+  margin-bottom: 1rem; /* Default for main paragraph */
+  line-height: 1.6;
+}
+.incentive-banner p strong {
+  color: var(--glow-accent);
+  font-weight: bold;
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .purchase-complete-page {
-    padding: 75px 1rem 1rem; /* Adjust padding for smaller screens */
+.discount-code-area {
+  background-color: color-mix(in srgb, var(--card-bg-color) 50%, black 50%); /* Darker background */
+  border: 2px dashed var(--glow-primary);
+  padding: 0.85rem 1.75rem; /* Adjusted padding */
+  border-radius: calc(var(--border-radius) / 1.5);
+  display: inline-block;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  transition: background-color var(--transition-speed-fast) ease,
+              border-color var(--transition-speed-fast) ease,
+              transform var(--transition-speed-fast) ease;
+}
+.incentive-banner:hover .discount-code-area,
+.incentive-banner:focus-visible .discount-code-area {
+  background-color: var(--card-bg-color); /* Solid on hover/focus of parent */
+  border-color: color-mix(in srgb, var(--glow-primary) 80%, white 20%);
+  transform: scale(1.02); /* Slight grow */
+}
+
+.discount-code-area span {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.7em;
+  font-weight: 700;
+  color: var(--glow-accent);
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 5px rgba(var(--glow-accent-rgb),0.6); /* Slightly stronger shadow */
+}
+
+.discount-instruction {
+  font-size: 0.85em;
+  color: color-mix(in srgb, var(--text-color) 70%, transparent 30%);
+  margin-top: 0.5rem;
+  margin-bottom: 0; /* Removed bottom margin */
+}
+
+
+.actions-section {
+  text-align: center;
+  opacity: 0;
+  animation: sectionFadeIn 0.7s 2s ease-out forwards;
+}
+
+.action-button {
+  padding: 12px 25px;
+  margin: 0.5rem 0.5rem; /* Adjusted margin for stacking */
+  border: 1px solid transparent;
+  border-radius: var(--border-radius); /* Consistent border-radius */
+  text-decoration: none;
+  font-size: 1em;
+  font-weight: bold;
+  font-family: 'Orbitron', sans-serif; /* Consistent font */
+  cursor: pointer;
+  transition: background-color var(--transition-speed-fast) ease,
+              color var(--transition-speed-fast) ease,
+              transform var(--transition-speed-fast) ease,
+              box-shadow var(--transition-speed-fast) ease;
+  transform: translateY(0); /* Initial state for transform */
+}
+
+.action-button.primary {
+  background-color: var(--glow-primary);
+  color: var(--card-bg-color);
+  border-color: var(--glow-primary);
+  box-shadow: 0 4px 8px rgba(var(--glow-primary-rgb), 0.2); /* Subtle initial shadow */
+}
+.action-button.primary:hover, .action-button.primary:focus-visible {
+  background-color: color-mix(in srgb, var(--glow-primary) 80%, white 20%);
+  color: var(--card-bg-color);
+  transform: translateY(-3px) scale(1.02); /* Added scale */
+  box-shadow: 0 7px 15px rgba(var(--glow-primary-rgb), 0.5); /* Enhanced shadow */
+  border-color: color-mix(in srgb, var(--glow-primary) 70%, white 30%);
+  outline: none;
+}
+.action-button.primary:focus-visible {
+  outline: 2px solid var(--glow-primary);
+  outline-offset: 2px;
+}
+.action-button.primary:active {
+  transform: translateY(-1px) scale(0.98);
+  background-color: color-mix(in srgb, var(--glow-primary) 70%, black 30%);
+  box-shadow: 0 3px 6px rgba(var(--glow-primary-rgb), 0.3); /* Softer active shadow */
+}
+
+.action-button.secondary {
+  background-color: color-mix(in srgb, var(--card-bg-color) 70%, white 10%); /* Theme consistent */
+  color: var(--text-color);
+  border-color: color-mix(in srgb, var(--text-color) 50%, transparent); /* Theme consistent */
+  box-shadow: 0 4px 8px rgba(0,0,0, 0.2); /* Subtle initial shadow */
+}
+.action-button.secondary:hover, .action-button.secondary:focus-visible {
+  background-color: color-mix(in srgb, var(--card-bg-color) 60%, white 15%); /* Theme consistent */
+  color: var(--glow-accent); /* Highlight on hover */
+  border-color: var(--glow-accent);
+  transform: translateY(-3px) scale(1.02); /* Added scale */
+  box-shadow: 0 7px 15px rgba(var(--glow-accent-rgb), 0.3); /* Enhanced shadow */
+  outline: none;
+}
+.action-button.secondary:focus-visible {
+  outline: 2px solid var(--glow-accent);
+  outline-offset: 2px;
+}
+.action-button.secondary:active {
+  transform: translateY(-1px) scale(0.98);
+  background-color: color-mix(in srgb, var(--card-bg-color) 50%, black 50%);
+  box-shadow: 0 3px 6px rgba(0,0,0, 0.3); /* Softer active shadow */
+  color: var(--glow-accent);
+}
+
+
+/* Removing the old h1 selector as its properties are merged or replaced */
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 768px) { /* Tablet */
+  .purchase-success-container {
+    margin: 1.5rem auto;
+    padding: 1.5rem;
   }
-  h1 {
-    font-size: 1.8em;
+  .header-section h1 {
+    font-size: 2em;
   }
-  h2 {
+  .order-summary-section h2 {
     font-size: 1.4em;
   }
-  li {
-    padding: 0.75rem;
+  .incentive-banner h4 {
+    font-size: 1.3em;
   }
-  .home-button {
+  .discount-code-area span {
+    font-size: 1.5em;
+  }
+  .action-button {
     padding: 10px 20px;
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 600px) { /* Mobile */
+  .purchase-success-container {
+    margin: 1rem; /* Remove auto for full width effect with padding */
+    padding: 1rem;
+  }
+  .header-section h1 {
+    font-size: 1.7em; 
+  }
+  .order-summary-section h2 {
+    font-size: 1.3em;
+  }
+   .order-summary-section li {
+    padding: 0.75rem 0.25rem; 
+  }
+  .total-amount {
+    font-size: 1.2em;
+  }
+  .incentive-banner h4 {
+    font-size: 1.2em;
+  }
+  .discount-code-area span {
+    font-size: 1.4em;
+  }
+  .discount-code-area {
+    padding: 0.6rem 1rem;
+  }
+  .action-button {
+    padding: 12px 15px; /* Adjusted padding for full width */
     font-size: 0.9em;
+    display: block;
+    width: 100%; 
+    margin: 10px 0; /* Full width, so no auto margin */
+  }
+  .actions-section {
+    padding: 0 10px; /* Add some padding to actions section if buttons are full width */
+  }
+}
+
+@media (max-width: 400px) { /* Small Mobile */
+  .purchase-success-container {
+    padding: 0.75rem;
+    margin: 0.5rem;
+  }
+   .header-section {
+    margin-bottom: 1rem;
+  }
+  .header-section h1 {
+    font-size: 1.5em;
+  }
+  .header-section p {
+    font-size: 0.9em;
+    margin-bottom: 1rem;
+  }
+  .order-summary-section, .incentive-banner, .actions-section {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .order-summary-section h2 {
+    font-size: 1.2em;
+  }
+  .incentive-banner h4 {
+    font-size: 1.1em;
+  }
+  .discount-code-area span {
+    font-size: 1.2em;
+  }
+   .discount-code-area {
+    padding: 0.5rem 0.8rem;
+  }
+  .incentive-banner p, .discount-instruction {
+    font-size: 0.8em;
   }
 }
 </style>

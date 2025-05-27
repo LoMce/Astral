@@ -132,22 +132,40 @@ const handleFormSubmit = () => {
   }
 
   if (cartStore.items.length === 0) {
-    console.warn('Your cart is empty. Please add items before placing an order.')
-    // It might be better to show an in-page message rather than routing away immediately.
-    router.push('/') 
-    return
-  }
-  // Simulate order placement
-  console.log(
-    `Simulating order placement...\nEmail: ${customerDetails.value.email}\nTotal: $${cartStore.cartTotal.toFixed(2)}\nThank you for your purchase!`,
-  )
-  // Store purchase data in localStorage
-  localStorage.setItem('purchaseEmail', customerDetails.value.email);
-  localStorage.setItem('purchaseItems', JSON.stringify(cartStore.items));
-  localStorage.setItem('purchaseTotal', cartStore.cartTotal.toFixed(2));
+    // Cart is empty, populate with fake data for demonstration
+    console.log('Cart is empty. Populating localStorage with fake data for purchase completion page.');
+    const fakeEmail = customerDetails.value.email || 'gamerX91@example.com';
+    const fakeItems = [
+      { id: 'cg_dx_01', name: 'Chrono Guardian - Deluxe Edition', quantity: 1, price: 59.99 },
+      { id: 'am_sp_02', name: 'Astro Miner - Starter Pack', quantity: 2, price: 19.99 },
+      { id: 'nr_ul_03', name: 'Neon Racer Ultimate', quantity: 1, price: 39.99 }
+    ];
+    let calculatedTotal = 0;
+    fakeItems.forEach(item => {
+      calculatedTotal += item.quantity * item.price;
+    });
 
-  cartStore.clearCart()
-  router.push('/purchase-complete')
+    localStorage.setItem('purchaseEmail', fakeEmail);
+    localStorage.setItem('purchaseItems', JSON.stringify(fakeItems));
+    localStorage.setItem('purchaseTotal', calculatedTotal.toFixed(2));
+    
+    // Log what would be "placed"
+    console.log(
+      `Simulating order placement with FAKE data...\nEmail: ${fakeEmail}\nTotal: $${calculatedTotal.toFixed(2)}\nItems: ${JSON.stringify(fakeItems, null, 2)}\nThank you for your purchase!`,
+    );
+    // Do not clear cartStore as it was already empty or not used for this fake transaction
+  } else {
+    // Cart is not empty, use actual cart data
+    console.log(
+      `Simulating order placement with ACTUAL cart data...\nEmail: ${customerDetails.value.email}\nTotal: $${cartStore.cartTotal.toFixed(2)}\nThank you for your purchase!`,
+    );
+    localStorage.setItem('purchaseEmail', customerDetails.value.email);
+    localStorage.setItem('purchaseItems', JSON.stringify(cartStore.items));
+    localStorage.setItem('purchaseTotal', cartStore.cartTotal.toFixed(2));
+    cartStore.clearCart(); // Clear the actual cart items
+  }
+
+  router.push('/purchase-complete');
 }
 </script>
 
