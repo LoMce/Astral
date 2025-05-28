@@ -742,9 +742,30 @@ onMounted(() => {
 }
 
 .key-item:hover {
-  background-color: rgba(var(--glow-accent-rgb), 0.15);
-  border-color: var(--glow-accent);
-  transform: scale(1.01);
+  /* background-color: rgba(var(--glow-accent-rgb), 0.15); */ /* Commented out for theme-specific */
+  /* border-color: var(--glow-accent); */ /* Commented out for theme-specific */
+  transform: scale(1.01); /* Keep generic transform */
+}
+
+/* Minecraft Key Item Hover */
+.purchase-item-card.game-minecraft .key-item:hover {
+  background-color: rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.25);
+  border-color: var(--mc-glow-accent, #50c878);
+  color: var(--mc-text-color-strong, #e0d8c0);
+}
+
+/* Fortnite Key Item Hover */
+.purchase-item-card.game-fortnite .key-item:hover {
+  background-color: rgba(var(--fn-glow-accent-rgb, 0, 255, 255), 0.2);
+  border-color: var(--fn-glow-accent, #00ffff);
+  color: var(--fn-text-color-strong, #f0e0ff);
+}
+
+/* Call of Duty Key Item Hover */
+.purchase-item-card.game-cod .key-item:hover {
+  background-color: rgba(var(--cod-glow-accent-rgb, 240, 230, 140), 0.25);
+  border-color: var(--cod-glow-accent, #f0e68c);
+  color: var(--cod-text-color-strong, #d0d8d0);
 }
 
 .keys-display-area ul .key-item:last-child {

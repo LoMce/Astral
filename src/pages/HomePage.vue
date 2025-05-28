@@ -98,14 +98,21 @@ onMounted(() => {
   // When HomePage mounts, if it's the active route and the theme isn't already neutral, neutralize it.
   // This handles the case of navigating from Checkout (or any other page) to Home.
   if (route.path === '/') {
-    // Only emit if the current global theme (from prop) isn't already neutral
-    if (props.activePageThemeProp !== '') {
-      emit('update-active-theme-game', '')
-    }
-    // And ensure internal state is also neutral
+    // // If a theme is active (from prop, originating from localStorage via App.vue)
+    // // tell App.vue to clear it because we are on the root path.
+    // // This should now be primarily handled by App.vue's synchronous initialization
+    // // and its route watcher for navigations to '/'.
+    // if (props.activePageThemeProp !== '') {
+    //   emit('update-active-theme-game', ''); 
+    // } 
+
+    // If App.vue's route watcher and initial setup are correct, 
+    // selectedGameInternal should already be cleared by the prop watcher when activePageThemeProp becomes ''.
+    // This secondary check acts as a safety net for HomePage's internal consistency if needed,
+    // especially if HomePage was already mounted and is re-activated (though route watchers in App.vue should cover this).
     if (selectedGameInternal.value !== '') {
-      selectedGameInternal.value = ''
-      keyAreaTransitionName.value = 'keys-fade-quick'
+      selectedGameInternal.value = '';
+      keyAreaTransitionName.value = 'keys-fade-quick';
     }
   }
 })
