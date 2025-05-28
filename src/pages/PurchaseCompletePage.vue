@@ -25,8 +25,13 @@
             <div v-if="item.generatedKeys && item.generatedKeys.length > 0" class="keys-display-area">
               <p class="keys-header">Your Key(s):</p>
               <ul>
-                <li v-for="(key, index) in item.generatedKeys" :key="index" class="key-item">
-                  {{ key }}
+                <li v-for="(key, index) in item.generatedKeys" 
+                    :key="index" 
+                    class="key-item"
+                    :class="{ 'key-copied-style': copiedKeyStates[`${item.id}_${index}`] }"
+                    @click="copyKeyToClipboard(key, item.id, index)">
+                  {{ key }} <!-- Key text always visible -->
+                  <span v-if="copiedKeyStates[`${item.id}_${index}`]" class="copied-tooltip">Copied!</span>
                 </li>
               </ul>
             </div>
@@ -63,6 +68,7 @@ import { ref, onMounted } from 'vue';
 const email = ref('');
 const items = ref([]);
 const total = ref('0.00');
+const copiedKeyStates = ref({}); // To store state like { 'itemId_keyIndex': true }
 
 function generateRandomKey() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -175,6 +181,38 @@ onMounted(() => {
   localStorage.removeItem('purchaseItems');
   localStorage.removeItem('purchaseTotal');
 });
+
+async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for await
+  if (!navigator.clipboard) {
+    console.error('Clipboard API not available.');
+    return;
+  }
+  
+  const keyId = `${itemId}_${keyIndex}`; // Unique identifier for the key
+
+  try {
+    await navigator.clipboard.writeText(keyText);
+    console.log('Key copied to clipboard:', keyText, '- ID:', keyId);
+
+    // Set copied state
+    copiedKeyStates.value[keyId] = true;
+
+    // Reset state after a delay
+    setTimeout(() => {
+      copiedKeyStates.value[keyId] = false;
+      // Consider Vue 3 reactivity: if setting to false doesn't trigger update for removal,
+      // then `delete copiedKeyStates.value[keyId];` might be needed, 
+      // or ensure keys are always present and only their boolean value changes.
+      // For simple true/false state change, Vue should detect it.
+    }, 2000); // Reset after 2 seconds
+
+  } catch (err) {
+    console.error('Failed to copy key:', keyText, '- ID:', keyId, '- Error:', err);
+    // Optionally, set a temporary error state for this keyId
+    // copiedKeyStates.value[keyId] = 'error'; // Example for error state
+    // setTimeout(() => { if(copiedKeyStates.value[keyId] === 'error') copiedKeyStates.value[keyId] = false; }, 2000);
+  }
+}
 </script>
 
 <style scoped>
@@ -752,12 +790,14 @@ onMounted(() => {
   background-color: rgba(var(--card-bg-color), 0.6);
   border: 1px solid rgba(var(--glow-secondary-rgb), 0.3);
   color: var(--glow-accent);
+  position: relative; /* For tooltip positioning */
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;
   border-radius: calc(var(--border-radius) / 2.5);
   letter-spacing: 0.75px;
   font-size: 0.95em;
   transition: background-color var(--transition-speed-fast) ease,
+              color var(--transition-speed-fast) ease, /* Added color */
               border-color var(--transition-speed-fast) ease,
               transform var(--transition-speed-fast) ease;
   overflow-wrap: break-word;
@@ -792,7 +832,73 @@ onMounted(() => {
   color: var(--cod-text-color-strong, #d0d8d0);
 }
 
+/* --- Key Copied Styles --- */
+/* Minecraft Key Copied Style */
+.purchase-item-card.game-minecraft .key-item.key-copied-style {
+  background-color: var(--mc-glow-accent, #50c878);
+  color: var(--mc-card-bg-color-opaque, #3c4b32); /* Dark text on light accent bg */
+  border-color: var(--mc-glow-accent, #50c878);
+}
+
+/* Fortnite Key Copied Style */
+.purchase-item-card.game-fortnite .key-item.key-copied-style {
+  background-color: var(--fn-glow-accent, #00ffff);
+  color: var(--fn-card-bg-color-opaque, #190f32); /* Dark text on light accent bg */
+  border-color: var(--fn-glow-accent, #00ffff);
+}
+
+/* Call of Duty Key Copied Style */
+.purchase-item-card.game-cod .key-item.key-copied-style {
+  background-color: var(--cod-glow-accent, #f0e68c);
+  color: var(--cod-card-bg-color-opaque, #1c201c); /* Dark text on light accent bg */
+  border-color: var(--cod-glow-accent, #f0e68c);
+}
+
+
 .keys-display-area ul .key-item:last-child {
   margin-bottom: 0;
+}
+
+/* --- Copied Tooltip Styles --- */
+.copied-tooltip {
+  position: absolute;
+  bottom: 100%; /* Position above the key item */
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px); /* Initial position before animation */
+  background-color: var(--glow-accent, #00ffdd); 
+  color: var(--card-bg-color, #1a1a1a); /* Ensure contrast */
+  padding: 4px 8px; /* Adjusted padding */
+  border-radius: 4px;
+  font-size: 0.8em; /* Adjusted font size */
+  font-family: 'Orbitron', sans-serif; /* Consistent font */
+  font-weight: bold;
+  white-space: nowrap;
+  z-index: 20; 
+  opacity: 0; /* Start transparent */
+  /* Animation: fadeIn then fadeOut */
+  animation: fadeInTooltip 0.3s ease-out forwards, fadeOutTooltip 0.3s 1.7s ease-in forwards;
+  pointer-events: none; /* Tooltip should not be interactive */
+}
+
+@keyframes fadeInTooltip {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px); /* Slide up slightly */
+  }
+}
+
+@keyframes fadeOutTooltip {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px); /* Slide back down slightly */
+  }
 }
 </style>
