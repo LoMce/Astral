@@ -317,7 +317,7 @@ const handleFormSubmit = () => {
   gap: 12px;
   flex-grow: 1;
   overflow-y: auto;
-  overflow-x: visible; /* Changed from hidden to visible */
+  overflow-x: hidden;
   padding-right: 8px;
   margin-right: -8px;
 }

@@ -68,8 +68,36 @@ import { ref, onMounted } from 'vue';
 const email = ref('');
 const items = ref([]);
 const total = ref('0.00');
+
+// A. `copiedKeyStates` ref and `copyKeyToClipboard` function
 const copiedKeyStates = ref({}); // To store state like { 'itemId_keyIndex': true }
 
+async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for await
+  if (!navigator.clipboard) {
+    console.error('Clipboard API not available.');
+    return;
+  }
+  
+  const keyId = `${itemId}_${keyIndex}`; // Unique identifier for the key
+
+  try {
+    await navigator.clipboard.writeText(keyText);
+    console.log('Key copied to clipboard:', keyText, '- ID:', keyId);
+
+    // Set copied state
+    copiedKeyStates.value[keyId] = true;
+
+    // Reset state after a delay
+    setTimeout(() => {
+      copiedKeyStates.value[keyId] = false;
+    }, 2000); // Reset after 2 seconds
+
+  } catch (err) {
+    console.error('Failed to copy key:', keyText, '- ID:', keyId, '- Error:', err);
+  }
+}
+
+// B. Single generateRandomKey function
 function generateRandomKey() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let key = '';
@@ -82,24 +110,28 @@ function generateRandomKey() {
   return key;
 }
 
+// C. onMounted function logic
 onMounted(() => {
   email.value = localStorage.getItem('purchaseEmail') || '';
-  const storedItemsString = localStorage.getItem('purchaseItems');
+  
+  // feat/purchase-complete-revamp's safer initialization of parsedItems
   let parsedItems = []; 
+  const storedItemsString = localStorage.getItem('purchaseItems');
 
   if (storedItemsString) {
     try {
       parsedItems = JSON.parse(storedItemsString);
       if (!Array.isArray(parsedItems)) {
         console.error('Parsed items is not an array. Initializing to empty.', parsedItems);
-        parsedItems = [];
+        parsedItems = []; // Ensure it's an array if parsing was weird but didn't throw
       }
     } catch (e) {
       console.error('Error parsing purchaseItems from localStorage:', e);
       // parsedItems remains [], items.value will be empty.
     }
   }
-  // Logging Step 1: Original parsedItems
+  
+  // main branch's detailed logging and mapping structure
   console.log('Original parsedItems:', JSON.parse(JSON.stringify(parsedItems)));
 
   if (parsedItems.length > 0) {
@@ -109,7 +141,6 @@ onMounted(() => {
       
       const mappedItems = parsedItems.map(originalItem => {
         if (!firstOriginalItemLogged && parsedItems.length > 0) {
-          // Logging Step 2: Processing originalItem (first item only)
           console.log('Processing originalItem (first):', JSON.parse(JSON.stringify(originalItem)));
           firstOriginalItemLogged = true;
         }
@@ -140,12 +171,11 @@ onMounted(() => {
           logoSrc: originalItem.logoSrc || '',
           gameName: originalItem.gameName || '', 
           passTitle: originalItem.passTitle || '', 
-          gameValue: originalItem.gameValue || '', // Ensure gameValue is preserved
+          gameValue: originalItem.gameValue || '', 
           generatedKeys: keys
         };
 
         if (!firstMappedItemLogged && parsedItems.length > 0) {
-            // Logging Step 3: Mapped item (first item only)
             console.log('Mapped item (first, pre-filter):', JSON.parse(JSON.stringify(mappedSingleItem)));
             firstMappedItemLogged = true;
         }
@@ -158,7 +188,6 @@ onMounted(() => {
         console.warn('All parsed items were invalid or filtered out.');
       }
 
-      // Logging Step 4: Final items.value (first item if available)
       if (items.value.length > 0) {
         console.log('Final items.value (first):', JSON.parse(JSON.stringify(items.value[0])));
       } else {
@@ -176,43 +205,10 @@ onMounted(() => {
 
   total.value = localStorage.getItem('purchaseTotal') || '0.00';
 
-  // Clear the stored data after displaying it
   localStorage.removeItem('purchaseEmail');
   localStorage.removeItem('purchaseItems');
   localStorage.removeItem('purchaseTotal');
 });
-
-async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for await
-  if (!navigator.clipboard) {
-    console.error('Clipboard API not available.');
-    return;
-  }
-  
-  const keyId = `${itemId}_${keyIndex}`; // Unique identifier for the key
-
-  try {
-    await navigator.clipboard.writeText(keyText);
-    console.log('Key copied to clipboard:', keyText, '- ID:', keyId);
-
-    // Set copied state
-    copiedKeyStates.value[keyId] = true;
-
-    // Reset state after a delay
-    setTimeout(() => {
-      copiedKeyStates.value[keyId] = false;
-      // Consider Vue 3 reactivity: if setting to false doesn't trigger update for removal,
-      // then `delete copiedKeyStates.value[keyId];` might be needed, 
-      // or ensure keys are always present and only their boolean value changes.
-      // For simple true/false state change, Vue should detect it.
-    }, 2000); // Reset after 2 seconds
-
-  } catch (err) {
-    console.error('Failed to copy key:', keyText, '- ID:', keyId, '- Error:', err);
-    // Optionally, set a temporary error state for this keyId
-    // copiedKeyStates.value[keyId] = 'error'; // Example for error state
-    // setTimeout(() => { if(copiedKeyStates.value[keyId] === 'error') copiedKeyStates.value[keyId] = false; }, 2000);
-  }
-}
 </script>
 
 <style scoped>
@@ -334,18 +330,18 @@ async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for
   opacity: 0; /* Base style for animation */
   animation: itemAppear 0.5s ease-out forwards;
   transition: background-color var(--transition-speed-fast) ease,
-              border-color var(--transition-speed-fast) ease, /* Added for hover */
-              box-shadow var(--transition-speed-fast) ease; /* Added for hover */
+              border-color var(--transition-speed-fast) ease, /* Added for hover from feat/purchase-complete-revamp */
+              box-shadow var(--transition-speed-fast) ease; /* Added for hover from feat/purchase-complete-revamp */
 }
 .purchase-item-card:hover {
-  /* background-color: rgba(var(--glow-primary-rgb), 0.05); */ /* Replaced by game-specific hovers */
+  background-color: rgba(var(--glow-primary-rgb), 0.05); /* Generic hover from main, kept as fallback */
 }
 
 /* Minecraft Purchase Item Card Hover */
 .purchase-item-card.themed-item-card.game-minecraft:hover {
-  background-color: rgba(var(--mc-card-bg-opaque-rgb, 60, 75, 50), 0.9); /* Slightly more opaque or a tint */
+  background-color: rgba(var(--mc-card-bg-opaque-rgb, 60, 75, 50), 0.9); 
   border-color: var(--mc-glow-accent, #50c878);
-  box-shadow: 0 0 12px rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.5); /* Enhanced shadow */
+  box-shadow: 0 0 12px rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.5); 
 }
 
 /* Fortnite Purchase Item Card Hover */
@@ -387,7 +383,7 @@ async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for
   object-fit: contain;
   border-radius: calc(var(--border-radius) / 2);
   background-color: rgba(0,0,0,0.1); /* Subtle bg for transparent logos */
-  border: 1px solid rgba(var(--glow-secondary-rgb), 0.1);
+  border: 1px solid rgba(var(--glow-secondary-rgb), 0.1); /* Assuming --glow-secondary-rgb is defined from theme */
   flex-shrink: 0; /* Prevent logo from shrinking */
 }
 
@@ -687,6 +683,28 @@ async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for
     padding: 0.4rem 0.6rem;
     letter-spacing: 0.5px;
   }
+  /* Added new style for copied key */
+  .key-copied-style {
+    background-color: rgba(var(--glow-accent-rgb), 0.25) !important; /* Light green flash */
+    color: color-mix(in srgb, var(--glow-accent) 90%, white) !important;
+    border-color: var(--glow-accent) !important;
+    position: relative; /* Needed for tooltip positioning */
+  }
+  .copied-tooltip {
+    position: absolute;
+    bottom: 100%; /* Position above the key item */
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px); /* Center and give some space */
+    background-color: var(--glow-accent);
+    color: var(--card-bg-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-family: 'Inter', sans-serif; /* Match main font */
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
 }
 
 @media (max-width: 400px) { /* Small Mobile */
@@ -760,6 +778,10 @@ async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for
     padding: 0.3rem 0.5rem;
     letter-spacing: 0.25px;
   }
+  .copied-tooltip { /* Adjust tooltip for smaller screens if necessary */
+    font-size: 0.7em;
+    padding: 3px 6px;
+  }
 }
 
 /* --- Styles for Generated Keys --- */
@@ -788,117 +810,97 @@ async function copyKeyToClipboard(keyText, itemId, keyIndex) { // Make async for
 .key-item {
   font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
   background-color: rgba(var(--card-bg-color), 0.6);
-  border: 1px solid rgba(var(--glow-secondary-rgb), 0.3);
+  border: 1px solid rgba(var(--glow-secondary-rgb), 0.3); /* Assuming --glow-secondary-rgb is defined or use a fallback */
   color: var(--glow-accent);
-  position: relative; /* For tooltip positioning */
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;
   border-radius: calc(var(--border-radius) / 2.5);
   letter-spacing: 0.75px;
   font-size: 0.95em;
   transition: background-color var(--transition-speed-fast) ease,
-              color var(--transition-speed-fast) ease, /* Added color */
               border-color var(--transition-speed-fast) ease,
-              transform var(--transition-speed-fast) ease;
+              transform var(--transition-speed-fast) ease,
+              color var(--transition-speed-fast) ease; /* Added color transition */
   overflow-wrap: break-word;
   word-break: break-all;
-  cursor: default; /* Or 'text' if preferred for selection */
+  cursor: pointer; /* Changed to pointer to indicate clickability */
+  position: relative; /* For tooltip positioning */
 }
 
-.key-item:hover {
-  /* background-color: rgba(var(--glow-accent-rgb), 0.15); */ /* Commented out for theme-specific */
-  /* border-color: var(--glow-accent); */ /* Commented out for theme-specific */
-  transform: scale(1.01); /* Keep generic transform */
+.key-item:hover:not(.key-copied-style) { /* Ensure hover doesn't override copied style */
+  background-color: rgba(var(--glow-accent-rgb), 0.1); 
+  border-color: var(--glow-accent); 
+  transform: scale(1.01); 
+  color: color-mix(in srgb, var(--glow-accent) 90%, white 10%);
 }
 
 /* Minecraft Key Item Hover */
-.purchase-item-card.game-minecraft .key-item:hover {
-  background-color: rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.25);
-  border-color: var(--mc-glow-accent, #50c878);
-  color: var(--mc-text-color-strong, #e0d8c0);
+.purchase-item-card.game-minecraft .key-item:hover:not(.key-copied-style) {
+  background-color: rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.25); /* Assuming --mc-glow-accent-rgb is defined */
+  border-color: var(--mc-glow-accent, #50c878); /* Assuming --mc-glow-accent is defined */
+  color: var(--mc-text-color-strong, #e0d8c0); /* Assuming --mc-text-color-strong is defined */
 }
 
 /* Fortnite Key Item Hover */
-.purchase-item-card.game-fortnite .key-item:hover {
-  background-color: rgba(var(--fn-glow-accent-rgb, 0, 255, 255), 0.2);
-  border-color: var(--fn-glow-accent, #00ffff);
-  color: var(--fn-text-color-strong, #f0e0ff);
+.purchase-item-card.game-fortnite .key-item:hover:not(.key-copied-style) {
+  background-color: rgba(var(--fn-glow-accent-rgb, 0, 255, 255), 0.2); /* Assuming --fn-glow-accent-rgb is defined */
+  border-color: var(--fn-glow-accent, #00ffff); /* Assuming --fn-glow-accent is defined */
+  color: var(--fn-text-color-strong, #f0e0ff); /* Assuming --fn-text-color-strong is defined */
 }
 
 /* Call of Duty Key Item Hover */
-.purchase-item-card.game-cod .key-item:hover {
-  background-color: rgba(var(--cod-glow-accent-rgb, 240, 230, 140), 0.25);
-  border-color: var(--cod-glow-accent, #f0e68c);
-  color: var(--cod-text-color-strong, #d0d8d0);
+.purchase-item-card.game-cod .key-item:hover:not(.key-copied-style) {
+  background-color: rgba(var(--cod-glow-accent-rgb, 240, 230, 140), 0.25); /* Assuming --cod-glow-accent-rgb is defined */
+  border-color: var(--cod-glow-accent, #f0e68c); /* Assuming --cod-glow-accent is defined */
+  color: var(--cod-text-color-strong, #d0d8d0); /* Assuming --cod-text-color-strong is defined */
 }
-
-/* --- Key Copied Styles --- */
-/* Minecraft Key Copied Style */
-.purchase-item-card.game-minecraft .key-item.key-copied-style {
-  background-color: var(--mc-glow-accent, #50c878);
-  color: var(--mc-card-bg-color-opaque, #3c4b32); /* Dark text on light accent bg */
-  border-color: var(--mc-glow-accent, #50c878);
-}
-
-/* Fortnite Key Copied Style */
-.purchase-item-card.game-fortnite .key-item.key-copied-style {
-  background-color: var(--fn-glow-accent, #00ffff);
-  color: var(--fn-card-bg-color-opaque, #190f32); /* Dark text on light accent bg */
-  border-color: var(--fn-glow-accent, #00ffff);
-}
-
-/* Call of Duty Key Copied Style */
-.purchase-item-card.game-cod .key-item.key-copied-style {
-  background-color: var(--cod-glow-accent, #f0e68c);
-  color: var(--cod-card-bg-color-opaque, #1c201c); /* Dark text on light accent bg */
-  border-color: var(--cod-glow-accent, #f0e68c);
-}
-
 
 .keys-display-area ul .key-item:last-child {
   margin-bottom: 0;
 }
 
-/* --- Copied Tooltip Styles --- */
+/* Styling for when a key has been copied */
+.key-copied-style {
+  background-color: rgba(var(--glow-accent-rgb), 0.3) !important; /* More prominent success indication */
+  color: color-mix(in srgb, var(--glow-accent) 95%, white 5%) !important;
+  border-color: var(--glow-accent) !important;
+  cursor: default !important; /* Not clickable immediately after copy */
+}
+
+/* Tooltip style for "Copied!" message */
 .copied-tooltip {
   position: absolute;
-  bottom: 100%; /* Position above the key item */
+  bottom: calc(100% + 4px); /* Position above the key item with a small gap */
   left: 50%;
-  transform: translateX(-50%) translateY(-5px); /* Initial position before animation */
-  background-color: var(--glow-accent, #00ffdd); 
-  color: var(--card-bg-color, #1a1a1a); /* Ensure contrast */
-  padding: 4px 8px; /* Adjusted padding */
-  border-radius: 4px;
-  font-size: 0.8em; /* Adjusted font size */
-  font-family: 'Orbitron', sans-serif; /* Consistent font */
-  font-weight: bold;
+  transform: translateX(-50%);
+  background-color: var(--glow-accent);
+  color: var(--card-bg-color); /* Dark text on light background for legibility */
+  padding: 5px 10px; /* Slightly larger padding */
+  border-radius: var(--border-radius); /* Consistent border radius */
+  font-size: 0.8em; /* Slightly larger for better readability */
+  font-family: 'Inter', sans-serif; /* Consistent font */
   white-space: nowrap;
-  z-index: 20; 
+  z-index: 100; /* Ensure it's above other elements */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3); /* More pronounced shadow */
   opacity: 0; /* Start transparent */
-  /* Animation: fadeIn then fadeOut */
-  animation: fadeInTooltip 0.3s ease-out forwards, fadeOutTooltip 0.3s 1.7s ease-in forwards;
-  pointer-events: none; /* Tooltip should not be interactive */
+  animation: tooltipFadeIn 0.3s ease forwards, tooltipFadeOut 0.3s 2.5s ease forwards; /* Fade in, then fade out after 2.5s */
 }
 
-@keyframes fadeInTooltip {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-5px);
-  }
-  100% {
+@keyframes tooltipFadeIn {
+  to {
     opacity: 1;
-    transform: translateX(-50%) translateY(-10px); /* Slide up slightly */
+    transform: translateX(-50%) translateY(-2px); /* Slight upward movement */
   }
 }
 
-@keyframes fadeOutTooltip {
-  0% {
+@keyframes tooltipFadeOut {
+  from {
     opacity: 1;
-    transform: translateX(-50%) translateY(-10px);
+    transform: translateX(-50%) translateY(-2px);
   }
-  100% {
+  to {
     opacity: 0;
-    transform: translateX(-50%) translateY(-5px); /* Slide back down slightly */
+    transform: translateX(-50%) translateY(0px); /* Slight downward movement before disappearing */
   }
 }
 </style>

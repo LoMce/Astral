@@ -113,23 +113,18 @@ const handleQtyBlur = (value) => {
     transform 0.2s ease-out,
     background-color var(--transition-speed) ease,
     border-color var(--transition-speed) ease,
-    color var(--transition-speed) ease,
-    box-shadow 0.2s ease-out; /* Explicitly add box-shadow to transition */
+    color var(--transition-speed) ease;
 
   /* background-color: var(--card-bg-color-opaque); */ /* Commented out to allow global theme */
   /* border: 1px solid rgba(var(--glow-secondary-rgb), 0.2); */ /* Commented out to allow global theme */
   color: var(--text-color); /* Base text color - can be overridden by theme */
   min-height: 80px; /* Ensure a minimum height */
-  position: relative; /* For z-index stacking context */
-  z-index: 1; /* Default z-index */
 }
 .cart-item-card:hover {
   transform: translateY(-2px) scale(1.01);
-  z-index: 10; /* Elevate on hover */
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.2), /* Existing hover shadow */
-    inset 0 0 8px rgba(var(--glow-accent-rgb), 0.05); /* Existing hover shadow */
-    /* Consider enhancing shadow further if global theme provides a stronger one for active cards */
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 0 8px rgba(var(--glow-accent-rgb), 0.05);
 }
 
 /* Minecraft Themed Item */
