@@ -23,8 +23,7 @@
           <div
             v-for="item in cartStore.items"
             :key="item.id"
-            class="mini-cart-item"
-            :class="`theme-item-${item.gameValue}`"
+            :class="['mini-cart-item', 'themed-item-card', item.gameValue ? 'game-' + item.gameValue : '', `theme-item-${item.gameValue}`]"
           >
             <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
             <img :src="item.gameLogo" :alt="item.gameName" class="mini-cart-item-logo" />
@@ -272,7 +271,8 @@ const handleKeyDown = (event) => {
 }
 
 .mini-cart-items {
-  overflow-y: auto;
+  overflow-y: auto; /* Allows vertical scrolling */
+  overflow-x: visible; /* Ensures horizontal overflow from scaling isn't clipped by this direct parent */
   padding: 10px 15px;
   flex-grow: 1;
 }
@@ -280,10 +280,22 @@ const handleKeyDown = (event) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0; /* Increased padding */
+  padding: 10px 0; 
   border-bottom: 1px dashed rgba(var(--text-muted-color), 0.15);
   font-size: 0.9em;
+  position: relative; /* For z-index stacking context */
+  z-index: 1; /* Default z-index */
+  transition: transform var(--transition-speed-fast) ease-out, 
+              box-shadow var(--transition-speed-fast) ease-out; 
+              /* Ensure z-index is NOT transitioned */
 }
+.mini-cart-item:hover {
+  transform: scale(1.03); /* Apply scaling on hover */
+  z-index: 10; /* Elevate on hover */
+  /* Optional: Enhance shadow further on hover if global theme doesn't provide enough lift */
+  /* box-shadow: 0 4px 15px rgba(0,0,0,0.2); */ 
+}
+
 .mini-cart-item:last-child {
   border-bottom: none;
 }

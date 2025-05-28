@@ -95,10 +95,24 @@ const MiniCart = defineAsyncComponent(() =>
 );
 
 // --- Reactive State ---
+const route = useRoute(); // Instantiate route first
+const router = useRouter(); // Keep router instance if used elsewhere
+
+const getInitialTheme = () => {
+  if (route.path === '/') {
+    // If on the homepage during initial setup, always start with no theme.
+    // If a theme was in localStorage, it implies an inconsistent state or
+    // that it should be cleared for the homepage context.
+    if (localStorage.getItem('activeThemeGame')) {
+      localStorage.removeItem('activeThemeGame');
+    }
+    return '';
+  }
+  return localStorage.getItem('activeThemeGame') || '';
+};
+
 /** @type {import('vue').Ref<String>} The current active game theme value (e.g., 'minecraft'). */
-const activeThemeGame = ref(localStorage.getItem(LOCAL_STORAGE_THEME_KEY) || '')
-const route = useRoute()
-const router = useRouter()
+const activeThemeGame = ref(getInitialTheme());
 const cartStore = useCartStore()
 /** @type {import('vue').Ref<Boolean>} Controls the visibility of the MiniCart. */
 const isMiniCartOpen = ref(false)
@@ -245,16 +259,24 @@ watch(
  * Also contains logic to potentially re-apply persisted theme if navigating
  * between non-home pages (currently commented out).
  */
-watch(route, (to) => {
-  closeMiniCart()
-  if (
-    to.path !== '/' &&
-    localStorage.getItem(LOCAL_STORAGE_THEME_KEY) &&
-    activeThemeGame.value !== localStorage.getItem(LOCAL_STORAGE_THEME_KEY)
-  ) {
-    // setActiveTheme(localStorage.getItem(LOCAL_STORAGE_THEME_KEY)); // Potential re-application
+watch(route, (toRoute, fromRoute) => { // Changed to include fromRoute for clarity if needed later
+  closeMiniCart();
+  if (toRoute.path === '/') {
+    if (activeThemeGame.value !== '') {
+      setActiveTheme(''); // Clear theme when navigating to home
+    }
+  } else {
+    // Navigating to a non-home page.
+    // Try to restore theme if one was previously stored and activeThemeGame is somehow blank,
+    // or if navigating from home where theme was explicitly blanked.
+    const storedTheme = localStorage.getItem('activeThemeGame');
+    if (storedTheme && activeThemeGame.value !== storedTheme) {
+      setActiveTheme(storedTheme);
+    }
+    // If no storedTheme, activeThemeGame should ideally already be ''
+    // or will be set by whatever interaction causes navigation (e.g. selecting a game).
   }
-})
+});
 
 /**
  * Watches for the MiniCart closing to return focus to the cart icon button.
@@ -269,17 +291,23 @@ watch(isMiniCartOpen, (newVal, oldVal) => {
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
-  const storedTheme = localStorage.getItem(LOCAL_STORAGE_THEME_KEY)
-  if (route.path !== '/' && storedTheme) {
-    setActiveTheme(storedTheme)
-  } else if (route.path === '/') {
-    if (activeThemeGame.value !== '') {
-      // setActiveTheme(''); // Handled by HomePage.vue's onMounted emit
+  const storedTheme = localStorage.getItem('activeThemeGame');
+  if (route.path !== '/') {
+    if (storedTheme) {
+      // If not on home and theme exists, ensure it's applied if not already matching
+      if (activeThemeGame.value !== storedTheme) {
+        setActiveTheme(storedTheme);
+      }
+    } else {
+      // Not on home, no stored theme - ensure theme is cleared
+      if (activeThemeGame.value !== '') {
+        setActiveTheme('');
+      }
     }
-  } else {
-    setActiveTheme('')
   }
-})
+  // If on home (route.path === '/'), getInitialTheme has already set activeThemeGame to ''.
+  // The body class update will be handled by the activeThemeGame watcher.
+});
 
 // --- Provide/Inject ---
 /**
