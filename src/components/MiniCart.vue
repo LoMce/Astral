@@ -23,8 +23,7 @@
           <div
             v-for="item in cartStore.items"
             :key="item.id"
-            class="mini-cart-item"
-            :class="`theme-item-${item.gameValue}`"
+            :class="['mini-cart-item', 'themed-item-card', item.gameValue ? 'game-' + item.gameValue : '', `theme-item-${item.gameValue}`]"
           >
             <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
             <img :src="item.gameLogo" :alt="item.gameName" class="mini-cart-item-logo" />

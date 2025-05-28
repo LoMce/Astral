@@ -433,3 +433,49 @@ textarea:focus-visible,
     max-width: 100%; /* Full width on very small screens */
   }
 }
+
+/* === Themed Item Card Styles === */
+
+/* Base for themed item cards (if any commonality not covered by component's own card style) */
+/* .themed-item-card { */
+  /* Might not be needed if components already have good base card styles */
+/* } */
+
+/* Minecraft Themed Item Card */
+.themed-item-card.game-minecraft {
+  background-color: rgba(var(--mc-card-bg-opaque-rgb, 60, 75, 50), 0.75); /* Slightly less opaque than page card */
+  border: 1px solid var(--mc-glow-accent, #50c878);
+  box-shadow: 0 0 8px rgba(var(--mc-glow-accent-rgb, 80, 200, 120), 0.3);
+}
+.themed-item-card.game-minecraft .item-name { /* Example of theming text inside */
+  color: var(--mc-text-color-highlight, #d8ccb8); 
+}
+/* Consider if other specific text elements inside need --mc-text-color or similar */
+
+/* Fortnite Themed Item Card */
+.themed-item-card.game-fortnite {
+  background-color: rgba(var(--fn-card-bg-opaque-rgb, 25, 15, 50), 0.75);
+  border: 1px solid var(--fn-glow-accent, #00ffff);
+  box-shadow: 0 0 8px rgba(var(--fn-glow-accent-rgb, 0, 255, 255), 0.3);
+}
+.themed-item-card.game-fortnite .item-name {
+  color: var(--fn-text-color-highlight, #e8d8ff);
+}
+
+/* Call of Duty Themed Item Card */
+.themed-item-card.game-cod {
+  background-color: rgba(var(--cod-card-bg-opaque-rgb, 28, 32, 28), 0.75);
+  border: 1px solid var(--cod-glow-accent, #f0e68c);
+  box-shadow: 0 0 8px rgba(var(--cod-glow-accent-rgb, 240, 230, 140), 0.3);
+}
+.themed-item-card.game-cod .item-name {
+  color: var(--cod-text-color-highlight, #c0c8c0);
+}
+
+/* You might also want a default style for .themed-item-card if a gameValue is missing or unknown, */
+/* though this might be handled by the component's base card styling. */
+/* For example: */
+/* .themed-item-card { */
+/*   background-color: rgba(var(--card-bg-color-opaque-rgb), 0.7); */ /* Using default theme vars */
+/*   border: 1px solid var(--glow-secondary); */
+/* } */
