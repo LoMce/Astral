@@ -10,7 +10,7 @@
       <h2>Order Summary</h2>
       <div v-if="items.length">
         <ul>
-          <li v-for="item in items" :key="item.id" class="purchase-item-card">
+          <li v-for="item in items" :key="item.id" :class="['purchase-item-card', 'themed-item-card', item.gameValue ? 'game-' + item.gameValue : '']">
             <div class="item-details">
               <img v-if="item.logoSrc" :src="item.logoSrc" :alt="item.name || 'Game Logo'" class="item-logo">
               <div class="item-info">
@@ -132,8 +132,9 @@ onMounted(() => {
           price: Number(originalItem.price) || 0,
           quantity: quantity,
           logoSrc: originalItem.logoSrc || '',
-          gameName: originalItem.gameName || '', // Preserve if exists
-          passTitle: originalItem.passTitle || '', // Preserve if exists
+          gameName: originalItem.gameName || '', 
+          passTitle: originalItem.passTitle || '', 
+          gameValue: originalItem.gameValue || '', // Ensure gameValue is preserved
           generatedKeys: keys
         };
 
@@ -287,10 +288,10 @@ onMounted(() => {
 
 /* Styles for individual purchased item cards */
 .purchase-item-card {
-  background-color: color-mix(in srgb, var(--card-bg-color) 95%, white 2%);
+  /* background-color: color-mix(in srgb, var(--card-bg-color) 95%, white 2%); */ /* Removed to allow global theme background */
   padding: 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius); /* This will be complemented by the global theme's border */
   margin-bottom: 1rem;
   opacity: 0; /* Base style for animation */
   animation: itemAppear 0.5s ease-out forwards;

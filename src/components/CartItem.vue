@@ -2,7 +2,8 @@
   <div class="cart-item-card" :class="themeClasses">
     <img :src="item.gameLogo" :alt="`${item.gameName} logo`" class="cart-item-logo" />
     <div class="cart-item-details">
-      <h3 class="cart-item-game-name">{{ item.gameName }}</h3>
+      <!-- Changed class from cart-item-game-name to item-name for global theme color, added layout class -->
+      <h3 class="item-name cart-item-game-name-layout">{{ item.gameName }}</h3>
       <p class="cart-item-pass-title">{{ item.passTitle }}</p>
       <p v-if="item.gameSpecificFeature" class="cart-item-specific-feature">
         {{ item.gameSpecificFeature }}
@@ -67,7 +68,12 @@ defineEmits(['removeItem'])
 const cartStore = useCartStore()
 
 const themeClasses = computed(() => {
-  return [`theme-item-${props.item.gameValue}`]
+  const classes = ['themed-item-card']; // Base class for global styles
+  if (props.item && props.item.gameValue) {
+    classes.push(`game-${props.item.gameValue}`); // Global game-specific theme (e.g., game-minecraft)
+    classes.push(`theme-item-${props.item.gameValue}`); // Existing scoped theme (e.g., theme-item-minecraft)
+  }
+  return classes;
 })
 
 const updateQty = (newQuantity) => {
@@ -109,9 +115,9 @@ const handleQtyBlur = (value) => {
     border-color var(--transition-speed) ease,
     color var(--transition-speed) ease;
 
-  background-color: var(--card-bg-color-opaque);
-  border: 1px solid rgba(var(--glow-secondary-rgb), 0.2);
-  color: var(--text-color);
+  /* background-color: var(--card-bg-color-opaque); */ /* Commented out to allow global theme */
+  /* border: 1px solid rgba(var(--glow-secondary-rgb), 0.2); */ /* Commented out to allow global theme */
+  color: var(--text-color); /* Base text color - can be overridden by theme */
   min-height: 80px; /* Ensure a minimum height */
 }
 .cart-item-card:hover {
@@ -123,13 +129,13 @@ const handleQtyBlur = (value) => {
 
 /* Minecraft Themed Item */
 .cart-item-card.theme-item-minecraft {
-  background-color: rgba(var(--mc-card-bg-opaque-rgb, 60, 75, 50), 0.92);
-  border: 1px solid rgba(var(--mc-glow-primary-rgb, 160, 136, 96), 0.4);
-  color: var(--mc-text-color, #c0b8a8);
+  /* background-color: rgba(var(--mc-card-bg-opaque-rgb, 60, 75, 50), 0.92); */ /* Global theme will handle background */
+  /* border: 1px solid rgba(var(--mc-glow-primary-rgb, 160, 136, 96), 0.4); */ /* Global theme will handle border */
+  color: var(--mc-text-color, #c0b8a8); /* Overall text color for this theme */
 }
-.cart-item-card.theme-item-minecraft .cart-item-game-name {
-  color: var(--mc-text-color-highlight, #d8ccb8);
-}
+/* .cart-item-card.theme-item-minecraft .cart-item-game-name { */ /* Color now handled by global .item-name */
+  /* color: var(--mc-text-color-highlight, #d8ccb8); */
+/* } */
 .cart-item-card.theme-item-minecraft .cart-item-pass-title {
   color: var(--mc-text-muted-color, #a09078);
 }
@@ -158,13 +164,13 @@ const handleQtyBlur = (value) => {
 
 /* Fortnite Themed Item */
 .cart-item-card.theme-item-fortnite {
-  background-color: rgba(var(--fn-card-bg-opaque-rgb, 25, 15, 50), 0.94);
-  border: 1px solid rgba(var(--fn-glow-primary-rgb, 138, 43, 226), 0.4);
-  color: var(--fn-text-color, #d8c8f0);
+  /* background-color: rgba(var(--fn-card-bg-opaque-rgb, 25, 15, 50), 0.94); */ /* Global theme will handle background */
+  /* border: 1px solid rgba(var(--fn-glow-primary-rgb, 138, 43, 226), 0.4); */ /* Global theme will handle border */
+  color: var(--fn-text-color, #d8c8f0); /* Overall text color for this theme */
 }
-.cart-item-card.theme-item-fortnite .cart-item-game-name {
-  color: var(--fn-text-color-highlight, #e8d8ff);
-}
+/* .cart-item-card.theme-item-fortnite .cart-item-game-name { */ /* Color now handled by global .item-name */
+  /* color: var(--fn-text-color-highlight, #e8d8ff); */
+/* } */
 .cart-item-card.theme-item-fortnite .cart-item-pass-title {
   color: var(--fn-text-muted-color, #b0a0c8);
 }
@@ -193,13 +199,13 @@ const handleQtyBlur = (value) => {
 
 /* Call of Duty Themed Item */
 .cart-item-card.theme-item-cod {
-  background-color: rgba(var(--cod-card-bg-opaque-rgb, 28, 32, 28), 0.95);
-  border: 1px solid rgba(var(--cod-glow-primary-rgb, 255, 140, 0), 0.4);
-  color: var(--cod-text-color, #a8b0a8);
+  /* background-color: rgba(var(--cod-card-bg-opaque-rgb, 28, 32, 28), 0.95); */ /* Global theme will handle background */
+  /* border: 1px solid rgba(var(--cod-glow-primary-rgb, 255, 140, 0), 0.4); */ /* Global theme will handle border */
+  color: var(--cod-text-color, #a8b0a8); /* Overall text color for this theme */
 }
-.cart-item-card.theme-item-cod .cart-item-game-name {
-  color: var(--cod-text-color-highlight, #c0c8c0);
-}
+/* .cart-item-card.theme-item-cod .cart-item-game-name { */ /* Color now handled by global .item-name */
+  /* color: var(--cod-text-color-highlight, #c0c8c0); */
+/* } */
 .cart-item-card.theme-item-cod .cart-item-pass-title {
   color: var(--cod-text-muted-color, #889088);
 }
@@ -241,14 +247,16 @@ const handleQtyBlur = (value) => {
   overflow: hidden; /* Prevent long text from breaking layout */
   margin-right: 10px; /* Space before quantity */
 }
-.cart-item-game-name {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1em;
-  font-weight: 600;
-  margin-bottom: 2px;
+/* This class now primarily handles layout/structure for the game name */
+.cart-item-game-name-layout { 
+  font-family: 'Orbitron', sans-serif; /* Retain font */
+  font-size: 1em; /* Retain specific size for CartItem */
+  font-weight: 600; /* Retain specific weight */
+  margin-bottom: 2px; /* Retain specific margin */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Color will be inherited or set by global .item-name theme */
 }
 .cart-item-pass-title {
   font-size: 0.85em;

@@ -195,12 +195,13 @@ const handleFormSubmit = () => {
 
       generatedDemoItems.push({
         id: `${game.value}_${pass.type}_demo_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`,
-        name: `${game.name} - ${pass.title}`, // Combined name for PurchaseCompletePage
-        price: price, // Numeric price
+        name: `${game.name} - ${pass.title}`, 
+        price: price, 
         quantity: quantity,
-        logoSrc: game.logoSrc, // Ensure logoSrc is included
+        logoSrc: game.logoSrc, 
         gameName: game.name, 
-        passTitle: pass.title, 
+        passTitle: pass.title,
+        gameValue: game.value // Ensure gameValue is included for demo items
       });
     }
     
@@ -231,12 +232,12 @@ const handleFormSubmit = () => {
       return {
         id: cartItem.id,
         name: `${cartItem.gameName} - ${cartItem.passTitle}`, // Ensure consistent name format
-        price: cartItem.priceNumeric || 0, // Ensure price is numeric
+        price: cartItem.priceNumeric || 0, 
         quantity: cartItem.quantity,
-        logoSrc: cartItem.gameLogo || '', // Map gameLogo to logoSrc, provide fallback
-        // Preserve gameName and passTitle if PurchaseCompletePage uses them separately
+        logoSrc: cartItem.gameLogo || '', 
         gameName: cartItem.gameName,
         passTitle: cartItem.passTitle,
+        gameValue: cartItem.gameValue || '' // Ensure gameValue is included from cart items
       };
     });
 
