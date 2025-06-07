@@ -9,8 +9,29 @@ const DEFAULT_GAME_LOGO = '';
 const ADD_TO_CART_STATUS_ADDED = 'added';
 
 export const useCartStore = defineStore('cart', () => {
+  const CART_STORAGE_KEY = 'myThematicAppCartItems';
+
   /** @type {import('vue').Ref<Array<Object>>} The array of items currently in the cart. */
   const items = ref([])
+
+  // Load from localStorage on Initialization
+  const storedItems = localStorage.getItem(CART_STORAGE_KEY);
+  if (storedItems) {
+    try {
+      const parsedItems = JSON.parse(storedItems);
+      // Basic validation: check if it's an array
+      if (Array.isArray(parsedItems)) {
+        items.value = parsedItems;
+      } else {
+        console.warn('Invalid cart data found in localStorage, ignoring.');
+        localStorage.removeItem(CART_STORAGE_KEY); // Clear invalid data
+      }
+    } catch (error) {
+      console.error('Error parsing cart items from localStorage:', error);
+      localStorage.removeItem(CART_STORAGE_KEY); // Clear corrupted data
+    }
+  }
+
   /** @type {import('vue').Ref<String|null>} The ID of the most recently added cart item. */
   const recentlyAddedItemId = ref(null)
   /** @type {import('vue').Ref<Number>} A counter that increments to trigger animations, e.g., on the cart icon. */
@@ -75,6 +96,10 @@ export const useCartStore = defineStore('cart', () => {
    * @param {Array<Object>} gamesDataArray - The global array of all available games data, used to enrich cart item.
    * @returns {String} Status of the addition, e.g., 'added'.
    */
+  function saveItemsToLocalStorage() {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items.value));
+  }
+
   function addToCart(passDetails, gameDetails, gamesDataArray) {
     const existingItemIndex = items.value.findIndex(
       (item) => item.gameValue === gameDetails.value && item.passTitle === passDetails.title,
@@ -107,6 +132,7 @@ export const useCartStore = defineStore('cart', () => {
     recentlyAddedItemId.value =
       existingItemIndex > -1 ? items.value[existingItemIndex].id : newItemId
     triggerCartAnimation.value++
+    saveItemsToLocalStorage(); // Save to localStorage
     return ADD_TO_CART_STATUS_ADDED;
   }
 
@@ -116,6 +142,7 @@ export const useCartStore = defineStore('cart', () => {
    */
   function removeFromCart(itemId) {
     items.value = items.value.filter((item) => item.id !== itemId)
+    saveItemsToLocalStorage(); // Save to localStorage
   }
 
   /**
@@ -128,9 +155,10 @@ export const useCartStore = defineStore('cart', () => {
     const item = items.value.find((i) => i.id === itemId)
     if (item) {
       if (newQuantity <= 0) {
-        removeFromCart(itemId)
+        removeFromCart(itemId) // removeFromCart already calls saveItemsToLocalStorage
       } else {
         item.quantity = newQuantity
+        saveItemsToLocalStorage(); // Save to localStorage
       }
     }
   }
@@ -143,6 +171,7 @@ export const useCartStore = defineStore('cart', () => {
     // Optionally reset other cart-related state like recentlyAddedItemId or triggerCartAnimation if needed
     // recentlyAddedItemId.value = null;
     // triggerCartAnimation.value = 0; // Or handle as appropriate for animation logic
+    saveItemsToLocalStorage(); // Save to localStorage
   }
 
   /**

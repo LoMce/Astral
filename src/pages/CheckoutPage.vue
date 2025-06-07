@@ -72,33 +72,15 @@ import { ref } from 'vue'
 import { useCartStore } from '@/stores/cart'
 import { useRouter } from 'vue-router'
 import CartItem from '@/components/CartItem.vue'
+import { gamesData } from '../data/gamesData.js' // Import gamesData
 
 const cartStore = useCartStore()
 const router = useRouter()
 
 // --- Demo Data for Empty Cart Scenario ---
-const demoGamesData = [
-  {
-    name: 'Minecraft',
-    value: 'minecraft',
-    logoSrc:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNzgwODY4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjAiIHJ5PSIwIiBmaWxsPSIjM2M0YjMyIi8+PHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjgiIGhlaWdodD0iOCIgcng9IjAiIHJ5PSIwIiBmaWxsPSIjYTg4NjAiLz48cmVjdCB4PSI4IiB5PSI0IiB3aWR0aD0iOCIgaGVpZ2h0PSI0IiByeD0iMCIgcnk9IjAiIGZpbGw9IiM3MDYwNDAiLz48cmVjdCB4PSI0IiB5PSI4IiB3aWR0aD0iNCIgaGVpZ2h0PSI4IiByeD0iMCIgcnk9IjAiIGZpbGw9IiM3MDYwNDAiLz48L3N2Zz4=',
-  },
-  {
-    name: 'Fortnite',
-    value: 'fortnite',
-    logoSrc:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjOTA4MGE4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTNzcuNTIgMiAxMiAyek04LjUgMTVjLTEuMzggMC0yLjUtMS4xMi0yLjUtMi41UzcuMTIgMTAgOC41IDEwczEuNjcuMiAyLjI1LjVsMS4yNS0zLjc1QzExLjE3IDkuNSA5LjgzIDkgOC41IDljLTIuNDggMC00LjUgMi00LjUgNC41UzYuMDIgMTggOC41IDE4czIuODMtLjUgMy41My0xLjI1bC0xLjI1LTEuNzVjLS41OC4zLTEuMzcuNS0yLjI4LjV6bTcgMGMtMS4zOCAwLTIuNS0xLjEyLTIuNS0yLjVzMS4xMi0yLjUgMi41LTIuNWMxLjMzIDAgMi42Ny41IDMuNSAxLjI1bC0xLjI1IDEuNzVjLS41OC0uMy0xLjM3LS41LTIuMjUtLjVzLTEuNjguMi0yLjI1LjVsMS4yNSAzLjc1Yy44My0uNyAxLjE3LTEuMjUgMy41My0xLjI1IDIuNDggMCA0LjUgMiA0LjUgNC41UzE3LjkSDE4IDE1LjUgMThzLTIuODMtLjUgMy41My0xLjI1bDEuMjUtMS43NWMuNTguMyAxLjM3LjUgMi4yOC41eiIgZmlsbD0iI2ZmNDBmZiIvPjwvc3ZnPg==',
-  },
-  {
-    name: 'Call of Duty',
-    value: 'cod',
-    logoSrc:
-      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNjg3MDY4IiBkPSJNMCAwaDI0djI0SDB6IiBmaWxsLW9wYWNpdHk9IjAuMSIvPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTNzcuNTIgMiAxMiAyek0xMiA0Yy0xLjEgMC0yIC45LTIgMnY5aDEuNVYxMS41aDF2NC41aDEuNVY2aC0xVjQuNWgtMVYzYy0xLjV2MXptLTQuNSA1aDEuNVYxNmgtMS41Vjl6bTkgMGgxLjVWMTZIMTYuNVY5eiIgZmlsbD0iI2NjNzcwMCIvPjwvc3ZnPg==',
-  }
-];
+// const demoGamesData = [ ... removed ... ]; // Keep this comment to indicate removal or remove entirely
 
-const demoKeyCardsData = [
+const demoKeyCardsData = [ // This is still used for random pass selection if cart is empty
   { type: 'Daily', title: 'Daily Pass', price: '$1.99', features: ['Instant Access', 'Core Features'] },
   { type: 'Monthly', title: 'Monthly Pass', price: '$19.99', features: ['Full Access', 'Unlock Everything'] },
   { type: 'Weekly', title: 'Weekly Pass', price: '$7.99', features: ['7-Day Access', 'All Features'] }
@@ -180,11 +162,11 @@ const handleFormSubmit = () => {
       let game, pass, combinationKey;
       let attempts = 0; // Safety break for loop
       do {
-        game = getRandomElement(demoGamesData);
+        game = getRandomElement(gamesData); // Use imported gamesData
         pass = getRandomElement(demoKeyCardsData);
         combinationKey = `${game.value}_${pass.type}`;
         attempts++;
-      } while (usedCombinations.has(combinationKey) && attempts < (demoGamesData.length * demoKeyCardsData.length));
+      } while (usedCombinations.has(combinationKey) && attempts < (gamesData.length * demoKeyCardsData.length)); // Use imported gamesData
       
       if (usedCombinations.has(combinationKey)) continue; // Skip if still duplicate after attempts (e.g. all combos used)
 

@@ -1,7 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '../pages/HomePage.vue'
-// import CartPage from '../pages/CartPage.vue' // Removed
 import CheckoutPage from '../pages/CheckoutPage.vue'
 import PurchaseCompletePage from '../pages/PurchaseCompletePage.vue'
 
@@ -11,11 +10,6 @@ const routes = [
     name: 'Home',
     component: HomePage,
   },
-  // { // Removed CartPage route
-  //   path: '/cart',
-  //   name: 'Cart',
-  //   component: CartPage,
-  // },
   {
     path: '/checkout',
     name: 'Checkout',

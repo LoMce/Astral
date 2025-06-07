@@ -16,7 +16,6 @@
       @keydown.down.prevent="navigateOptions('down')"
       @keydown.up.prevent="navigateOptions('up')"
     >
-      <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
       <img
         :src="selectedGameDisplayLogo"
         :alt="selectedGameDisplayName ? `${selectedGameDisplayName} logo` : 'Select game icon'"
@@ -66,7 +65,6 @@
           @click="selectOption(game)"
           @mouseenter="highlightedIndex = index"
         >
-          <!-- TODO: Image Optimization: If game logos are raster images, consider WebP format with <picture> element fallback. If SVGs, ensure they are optimized. -->
           <img :src="game.logoSrc" :alt="`${game.name} logo`" />
           <span>{{ game.name }}</span>
         </li>
